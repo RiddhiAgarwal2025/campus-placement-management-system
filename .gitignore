@@ -1,0 +1,12 @@
+target/
+*.class
+.idea/
+*.iml
+.vscode/
+
+# Local database credentials
+src/main/resources/db.properties
+
+# OS files
+.DS_Store
+Thumbs.db
