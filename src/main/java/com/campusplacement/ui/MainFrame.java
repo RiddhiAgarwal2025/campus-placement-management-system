@@ -33,6 +33,8 @@ import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.time.LocalDate;
@@ -107,18 +109,27 @@ public class MainFrame extends JFrame {
 
     private JPanel topBar(User user) {
         JPanel bar = new JPanel(new BorderLayout());
-        bar.setBackground(Theme.INK);
+        bar.setBackground(Theme.SURFACE);
         bar.setPreferredSize(new Dimension(10, 58));
-        bar.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0x2E2A31)),
+        bar.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(0, 0, 1, 0, Theme.BORDER),
                 BorderFactory.createEmptyBorder(0, 24, 0, 24)));
-        JLabel mark = Ui.label("CAMPUS PLACEMENTS", Theme.serif(16), Theme.SURFACE);
-        bar.add(mark, BorderLayout.WEST);
-        JPanel right = Ui.vstack(0);
+
+        JPanel brand = Ui.row();
+        brand.setOpaque(false);
+        JLabel mark = Ui.label("CAMPUS PLACEMENTS", Theme.sansBold(14), Theme.TEXT);
+        mark.setIcon(Icons.of(Glyph.DASHBOARD, 18, Theme.TEXT));
+        mark.setIconTextGap(10);
+        brand.add(mark);
+        bar.add(brand, BorderLayout.WEST);
+
+        JPanel right = Ui.vstack(2);
+        right.setOpaque(false);
         right.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
-        JLabel name = Ui.label(user.displayName(), Theme.sansBold(13), Theme.INK_TEXT);
+        JLabel name = Ui.label(user.displayName(), Theme.sansBold(13), Theme.TEXT);
         name.setAlignmentX(RIGHT_ALIGNMENT);
-        String role = user.role() == User.Role.OFFICER ? "Placement Officer" : "Student  " + user.studentId();
-        JLabel roleLabel = Ui.label(role + "   |   " + Formats.date(LocalDate.now()), Theme.sans(11), Theme.INK_MUTED);
+        String role = user.role() == User.Role.OFFICER ? "Placement Officer" : "Student • " + user.studentId();
+        JLabel roleLabel = Ui.label(role + "   •   " + Formats.date(LocalDate.now()), Theme.sans(11), Theme.MUTED);
         roleLabel.setAlignmentX(RIGHT_ALIGNMENT);
         right.add(name);
         right.add(roleLabel);
@@ -128,16 +139,19 @@ public class MainFrame extends JFrame {
 
     private JPanel sidebar() {
         JPanel side = new JPanel(new BorderLayout());
-        side.setBackground(Theme.INK);
-        side.setPreferredSize(new Dimension(232, 10));
-        JPanel list = Ui.vstack(0);
-        list.setBorder(BorderFactory.createEmptyBorder(14, 0, 0, 0));
+        side.setBackground(Theme.SURFACE);
+        side.setPreferredSize(new Dimension(236, 10));
+        side.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, Theme.BORDER));
+
+        JPanel list = Ui.vstack(2);
+        list.setOpaque(false);
+        list.setBorder(BorderFactory.createEmptyBorder(14, 12, 14, 12));
         String section = null;
         for (Nav n : navs) {
             if (!n.section().isEmpty() && !n.section().equals(section)) {
                 section = n.section();
-                JLabel s = Ui.label(section, Theme.sansBold(10), Theme.INK_MUTED);
-                s.setBorder(BorderFactory.createEmptyBorder(16, 26, 6, 0));
+                JLabel s = Ui.label(section, Theme.sansBold(10), Theme.MUTED);
+                s.setBorder(BorderFactory.createEmptyBorder(14, 12, 6, 0));
                 s.setAlignmentX(LEFT_ALIGNMENT);
                 list.add(s);
             }
@@ -146,10 +160,13 @@ public class MainFrame extends JFrame {
             list.add(item);
         }
         side.add(list, BorderLayout.NORTH);
+
         JPanel bottom = Ui.vstack(0);
-        bottom.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(0x2E2A31)),
-                BorderFactory.createEmptyBorder(8, 0, 12, 0)));
-        bottom.add(new NavItem("Logout", Glyph.LOGOUT, this::logout));
+        bottom.setOpaque(false);
+        bottom.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(1, 0, 0, 0, Theme.BORDER),
+                BorderFactory.createEmptyBorder(8, 12, 12, 12)));
+        bottom.add(new NavItem("Sign out", Glyph.LOGOUT, this::logout));
         side.add(bottom, BorderLayout.SOUTH);
         return side;
     }
@@ -179,7 +196,7 @@ public class MainFrame extends JFrame {
         }
     }
 
-    /** Sidebar entry with icon, hover state and a plum indicator when active. */
+    /** Sidebar entry with icon, hover state and a clean active pill. */
     private static class NavItem extends JPanel {
         private final JLabel label;
         private final Glyph glyph;
@@ -191,24 +208,23 @@ public class MainFrame extends JFrame {
             this.glyph = glyph;
             setOpaque(false);
             setAlignmentX(LEFT_ALIGNMENT);
-            setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
-            setPreferredSize(new Dimension(232, 38));
+            setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
+            setPreferredSize(new Dimension(212, 36));
             setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            label = Ui.label(text, Theme.sans(13), Theme.INK_TEXT);
-            label.setIconTextGap(12);
-            label.setBorder(BorderFactory.createEmptyBorder(0, 24, 0, 0));
-            add(label);
-            add(Box.createHorizontalStrut(4), BorderLayout.EAST);
+            label = Ui.label(text, Theme.sans(13), Theme.MUTED);
+            label.setIconTextGap(10);
+            label.setBorder(BorderFactory.createEmptyBorder(0, 12, 0, 0));
+            add(label, BorderLayout.CENTER);
             updateLook();
             addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseClicked(MouseEvent e) { onClick.run(); }
 
                 @Override
-                public void mouseEntered(MouseEvent e) { hover = true; repaint(); }
+                public void mouseEntered(MouseEvent e) { hover = true; updateLook(); repaint(); }
 
                 @Override
-                public void mouseExited(MouseEvent e) { hover = false; repaint(); }
+                public void mouseExited(MouseEvent e) { hover = false; updateLook(); repaint(); }
             });
         }
 
@@ -219,22 +235,29 @@ public class MainFrame extends JFrame {
         }
 
         private void updateLook() {
-            Color c = active ? Theme.SURFACE : Theme.INK_TEXT;
+            Color c = active ? Theme.TEXT : (hover ? new Color(0x1E, 0x29, 0x3B) : Theme.MUTED);
             label.setForeground(c);
             label.setFont(active ? Theme.sansBold(13) : Theme.sans(13));
-            label.setIcon(Icons.of(glyph, 17, active ? Theme.LIGHT_PLUM : Theme.INK_MUTED));
+            Color iconColor = active ? Theme.TEXT : (hover ? new Color(0x33, 0x41, 0x55) : new Color(0x94, 0xA3, 0xB8));
+            label.setIcon(Icons.of(glyph, 16, iconColor));
         }
 
         @Override
         protected void paintComponent(Graphics g) {
-            if (active || hover) {
-                g.setColor(active ? Theme.INK_RAISED : new Color(0x1F1C22));
-                g.fillRect(0, 0, getWidth(), getHeight());
-            }
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            int w = getWidth();
+            int h = getHeight();
             if (active) {
-                g.setColor(Theme.PLUM);
-                g.fillRect(0, 0, 3, getHeight());
+                g2.setColor(new Color(0xF1, 0xF5, 0xF9));
+                g2.fillRoundRect(0, 0, w, h, 6, 6);
+                g2.setColor(Theme.PLUM);
+                g2.fillRoundRect(0, 6, 3, h - 12, 2, 2);
+            } else if (hover) {
+                g2.setColor(new Color(0xF8, 0xFA, 0xFC));
+                g2.fillRoundRect(0, 0, w, h, 6, 6);
             }
+            g2.dispose();
             super.paintComponent(g);
         }
     }

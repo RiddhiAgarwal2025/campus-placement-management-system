@@ -38,9 +38,9 @@ public final class Ui {
         return l;
     }
 
-    public static JLabel title(String text) { return label(text, Theme.serif(26), Theme.TEXT); }
+    public static JLabel title(String text) { return label(text, Theme.sansBold(24), Theme.TEXT); }
 
-    public static JLabel heading(String text) { return label(text, Theme.serif(17), Theme.TEXT); }
+    public static JLabel heading(String text) { return label(text, Theme.sansBold(16), Theme.TEXT); }
 
     public static JLabel muted(String text) { return label(text, Theme.sans(12), Theme.MUTED); }
 
@@ -157,6 +157,7 @@ public final class Ui {
         JPanel head = new JPanel(new BorderLayout());
         head.setOpaque(false);
         JPanel titles = vstack(0);
+        titles.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 12));
         titles.add(heading(heading));
         if (caption != null) {
             JLabel cap = muted(caption);

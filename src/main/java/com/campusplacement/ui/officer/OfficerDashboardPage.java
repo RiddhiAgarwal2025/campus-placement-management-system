@@ -25,24 +25,24 @@ public class OfficerDashboardPage extends Page {
     private final DashboardService service = new DashboardService();
     private final StatTile students = new StatTile("Students", "registered", false);
     private final StatTile companies = new StatTile("Companies", "recruiting partners", false);
-    private final StatTile active = new StatTile("Active drives", "open for applications", true);
-    private final StatTile applications = new StatTile("Applications", "all drives", false);
-    private final StatTile shortlisted = new StatTile("Shortlisted", "students in process", false);
+    private final StatTile active = new StatTile("Active drives", "currently open", true);
+    private final StatTile applications = new StatTile("Applications", "submitted", false);
+    private final StatTile shortlisted = new StatTile("Shortlisted", "in process", false);
     private final StatTile offers = new StatTile("Offers issued", "all statuses", false);
-    private final StatTile accepted = new StatTile("Accepted", "students placed", false);
+    private final StatTile accepted = new StatTile("Accepted", "placed students", false);
 
     private final DataTable<Drive> upcoming = new DataTable<Drive>("No upcoming drives", "Create a drive to see it here.")
-            .col("Company", Drive::companyName, 150)
-            .col("Position", Drive::position, 150)
-            .col("Deadline", d -> d.deadline(), 90, Kind.DATE)
-            .col("Due", d -> Formats.relative(d.deadline()), 80)
-            .col("Applied", Drive::applicationCount, 60, Kind.NUMBER)
-            .col("Status", Drive::status, 90, Kind.BADGE);
+            .col("Company", Drive::companyName, 120)
+            .col("Position", Drive::position, 120)
+            .col("Deadline", d -> d.deadline(), 80, Kind.DATE)
+            .col("Due", d -> Formats.relative(d.deadline()), 75)
+            .col("Applied", Drive::applicationCount, 55, Kind.NUMBER)
+            .col("Status", Drive::status, 80, Kind.BADGE);
     private final DataTable<Offer> recentOffers = new DataTable<Offer>("No offers yet", "Offers appear after selection.")
-            .col("Student", Offer::studentName, 130)
-            .col("Company", Offer::companyName, 130)
-            .col("Package", Offer::packageLpa, 90, Kind.MONEY)
-            .col("Status", Offer::status, 90, Kind.BADGE);
+            .col("Student", Offer::studentName, 115)
+            .col("Company", Offer::companyName, 115)
+            .col("Package", Offer::packageLpa, 85, Kind.MONEY)
+            .col("Status", Offer::status, 80, Kind.BADGE);
     private final DataTable<Application> recentApps = new DataTable<Application>("No applications yet",
             "Students apply from their own accounts.")
             .col("Applied", Application::appliedAt, 140, Kind.DATE)

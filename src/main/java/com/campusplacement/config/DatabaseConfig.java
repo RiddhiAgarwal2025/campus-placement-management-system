@@ -22,10 +22,7 @@ public final class DatabaseConfig {
     }
 
     public static synchronized DatabaseConfig get() {
-        if (instance == null) {
-            instance = load();
-        }
-        return instance;
+        return load();
     }
 
     private static DatabaseConfig load() {

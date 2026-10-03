@@ -76,7 +76,7 @@ public class DataTable<T> extends JPanel {
         table.setRowHeight(38);
         table.setShowVerticalLines(false);
         table.setShowHorizontalLines(true);
-        table.setGridColor(new Color(0xEEE9E4));
+        table.setGridColor(Theme.BORDER);
         table.setIntercellSpacing(new Dimension(0, 1));
         table.setFont(Theme.sans(13));
         table.setForeground(Theme.TEXT);
@@ -90,7 +90,7 @@ public class DataTable<T> extends JPanel {
         header.setReorderingAllowed(false);
         header.setPreferredSize(new Dimension(10, 36));
         header.setDefaultRenderer(new HeaderRenderer());
-        header.setBackground(Theme.SURFACE);
+        header.setBackground(new Color(0xF8, 0xFA, 0xFC));
         header.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Theme.BORDER));
 
         JScrollPane sp = new JScrollPane(table);
@@ -261,7 +261,7 @@ public class DataTable<T> extends JPanel {
             super.getTableCellRendererComponent(t, v, s, f, r, c);
             setFont(Theme.sansBold(11));
             setForeground(Theme.MUTED);
-            setBackground(Theme.SURFACE);
+            setBackground(new Color(0xF8, 0xFA, 0xFC));
             setBorder(BorderFactory.createEmptyBorder(0, 12, 0, 12));
             setHorizontalAlignment(LEFT);
             return this;

@@ -15,35 +15,32 @@ import javax.swing.plaf.FontUIResource;
 public final class Theme {
     private Theme() { }
 
-    public static final Color BG = new Color(0xF5F2ED);
-    public static final Color SURFACE = new Color(0xFFFDFC);
-    public static final Color TEXT = new Color(0x17151A);
-    public static final Color MUTED = new Color(0x756D73);
-    public static final Color BORDER = new Color(0xDDD7D2);
-    public static final Color PLUM = new Color(0x633B59);
-    public static final Color DEEP_PLUM = new Color(0x48283F);
-    public static final Color LIGHT_PLUM = new Color(0xE9DFE7);
+    public static final Color BG = new Color(0xF8, 0xFA, 0xFC);
+    public static final Color SURFACE = new Color(0xFF, 0xFF, 0xFF);
+    public static final Color TEXT = new Color(0x0F, 0x17, 0x2A);
+    public static final Color MUTED = new Color(0x64, 0x74, 0x8B);
+    public static final Color BORDER = new Color(0xE2, 0xE8, 0xF0);
+    public static final Color PLUM = new Color(0x0F, 0x17, 0x2A);
+    public static final Color DEEP_PLUM = new Color(0x1E, 0x29, 0x3B);
+    public static final Color LIGHT_PLUM = new Color(0xF1, 0xF5, 0xF9);
 
-    public static final Color INK = new Color(0x17151A);
-    public static final Color INK_RAISED = new Color(0x26222A);
-    public static final Color INK_TEXT = new Color(0xEDE7E1);
-    public static final Color INK_MUTED = new Color(0x9C939A);
-    public static final Color ROW_ALT = new Color(0xFAF7F3);
-    public static final Color ROW_SELECTED = new Color(0xEFE6EC);
-    public static final Color BRICK = new Color(0x8A3B32);
-    public static final Color BRICK_BG = new Color(0xF3E3E0);
-    public static final Color OCHRE = new Color(0x7A5A1E);
-    public static final Color OCHRE_BG = new Color(0xF4ECDD);
-    public static final Color STONE_BG = new Color(0xECE8E4);
+    public static final Color INK = new Color(0x0F, 0x17, 0x2A);
+    public static final Color INK_RAISED = new Color(0x1E, 0x29, 0x3B);
+    public static final Color INK_TEXT = new Color(0xF8, 0xFA, 0xFC);
+    public static final Color INK_MUTED = new Color(0x94, 0xA3, 0xB8);
+    public static final Color ROW_ALT = new Color(0xF8, 0xFA, 0xFC);
+    public static final Color ROW_SELECTED = new Color(0xF1, 0xF5, 0xF9);
+    public static final Color BRICK = new Color(0xDC, 0x26, 0x26);
+    public static final Color BRICK_BG = new Color(0xFE, 0xF2, 0xF2);
+    public static final Color OCHRE = new Color(0xD9, 0x77, 0x06);
+    public static final Color OCHRE_BG = new Color(0xFF, 0xFB, 0xEB);
+    public static final Color STONE_BG = new Color(0xF1, 0xF5, 0xF9);
 
-    public static final String SERIF = pick("Georgia", "Palatino Linotype", "Book Antiqua", "Cambria", "Charter",
-            "DejaVu Serif", "Serif");
-    public static final String SANS = pick("Segoe UI", "Helvetica Neue", "Inter", "Noto Sans", "Ubuntu", "DejaVu Sans",
-            "SansSerif");
+    public static final String SANS = pick("Inter", "Segoe UI", "Helvetica Neue", "Arial", "SansSerif");
 
-    public static Font serif(int size) { return new Font(SERIF, Font.PLAIN, size); }
+    public static Font serif(int size) { return new Font(SANS, Font.PLAIN, size); }
 
-    public static Font serifBold(int size) { return new Font(SERIF, Font.BOLD, size); }
+    public static Font serifBold(int size) { return new Font(SANS, Font.BOLD, size); }
 
     public static Font sans(int size) { return new Font(SANS, Font.PLAIN, size); }
 
@@ -62,17 +59,22 @@ public final class Theme {
 
     /** Installs consistent defaults for components that are not custom painted. */
     public static void install() {
+        boolean flatLaf = false;
         try {
-            UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
-        } catch (Exception ignored) {
-            // fall back to whatever look and feel is active
+            flatLaf = com.formdev.flatlaf.FlatLightLaf.setup();
+        } catch (Throwable ignored) {
+            try {
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            } catch (Exception ignored2) { }
         }
+
         FontUIResource body = new FontUIResource(sans(13));
         for (Object key : UIManager.getLookAndFeelDefaults().keySet().toArray()) {
             if (key.toString().endsWith(".font")) {
                 UIManager.put(key, body);
             }
         }
+
         put("Panel.background", BG);
         put("OptionPane.background", SURFACE);
         put("OptionPane.messageForeground", TEXT);
@@ -96,13 +98,11 @@ public final class Theme {
         put("List.selectionForeground", TEXT);
         put("Table.selectionBackground", ROW_SELECTED);
         put("Table.selectionForeground", TEXT);
+        put("Table.gridColor", BORDER);
         put("CheckBox.background", SURFACE);
         put("CheckBox.foreground", TEXT);
         put("ScrollPane.background", SURFACE);
         put("Viewport.background", SURFACE);
-        put("ScrollBar.thumb", new Color(0xCFC7C2));
-        put("ScrollBar.track", SURFACE);
-        put("ScrollBar.width", 10);
         put("ToolTip.background", INK);
         put("ToolTip.foreground", INK_TEXT);
         put("TabbedPane.selected", SURFACE);
@@ -122,8 +122,25 @@ public final class Theme {
         put("ComboBox.border", BorderFactory.createLineBorder(BORDER));
         put("ToolTip.border", BorderFactory.createEmptyBorder(6, 8, 6, 8));
         put("ScrollPane.border", BorderFactory.createEmptyBorder());
-        UIManager.put("ScrollBarUI", ThemeUI.ScrollBar.class.getName());
-        UIManager.put("ComboBoxUI", ThemeUI.Combo.class.getName());
+
+        if (flatLaf) {
+            UIManager.put("Component.focusWidth", 1);
+            UIManager.put("Component.innerFocusWidth", 0);
+            UIManager.put("Button.arc", 6);
+            UIManager.put("Component.arc", 6);
+            UIManager.put("TextComponent.arc", 6);
+            UIManager.put("ScrollBar.showButtons", false);
+            UIManager.put("ScrollBar.thumbArc", 999);
+            UIManager.put("ScrollBar.thumbInsets", new java.awt.Insets(2, 2, 2, 2));
+            UIManager.put("ScrollBar.track", SURFACE);
+            UIManager.put("ScrollBar.thumb", new Color(0xCF, 0xD8, 0xDC));
+        } else {
+            UIManager.put("ScrollBar.thumb", new Color(0xCF, 0xD8, 0xDC));
+            UIManager.put("ScrollBar.track", SURFACE);
+            UIManager.put("ScrollBar.width", 10);
+            UIManager.put("ScrollBarUI", ThemeUI.ScrollBar.class.getName());
+            UIManager.put("ComboBoxUI", ThemeUI.Combo.class.getName());
+        }
     }
 
     private static void put(String key, Object value) {

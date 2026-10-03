@@ -7,6 +7,13 @@ import java.sql.SQLException;
 
 /** Opens JDBC connections using the single configuration source. */
 public final class ConnectionManager {
+    static {
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+        } catch (ClassNotFoundException ignored) {
+        }
+    }
+
     private ConnectionManager() { }
 
     public static Connection open() throws SQLException {

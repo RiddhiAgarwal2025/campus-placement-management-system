@@ -27,12 +27,30 @@ public class Badge extends JComponent {
         String v = value == null ? "" : value;
         this.text = v.replace('_', ' ');
         switch (v) {
-            case "SELECTED", "ACCEPTED", "PASS", "OPEN", "ELIGIBLE", "PLACED" -> { bg = Theme.PLUM; fg = Theme.SURFACE; }
-            case "SHORTLISTED", "IN_PROGRESS", "YES" -> { bg = Theme.LIGHT_PLUM; fg = Theme.DEEP_PLUM; }
-            case "REJECTED", "FAIL", "NOT ELIGIBLE" -> { bg = Theme.BRICK_BG; fg = Theme.BRICK; }
-            case "PENDING", "UPCOMING", "AWAITING" -> { bg = Theme.OCHRE_BG; fg = Theme.OCHRE; }
-            case "COMPLETED" -> { bg = Theme.INK; fg = Theme.INK_TEXT; }
-            default -> { bg = Theme.STONE_BG; fg = new Color(0x4A444A); }
+            case "SELECTED", "ACCEPTED", "PASS", "OPEN", "ELIGIBLE", "PLACED" -> { 
+                bg = new Color(0xDC, 0xFC, 0xE7); // emerald-100
+                fg = new Color(0x15, 0x80, 0x3D); // emerald-700
+            }
+            case "SHORTLISTED", "IN_PROGRESS", "YES" -> { 
+                bg = new Color(0xEE, 0xF2, 0xFF); // indigo-50
+                fg = new Color(0x43, 0x38, 0xCA); // indigo-700
+            }
+            case "REJECTED", "FAIL", "NOT ELIGIBLE" -> { 
+                bg = new Color(0xFE, 0xE2, 0xE2); // rose-100
+                fg = new Color(0xB9, 0x1C, 0x1C); // rose-700
+            }
+            case "PENDING", "UPCOMING", "AWAITING" -> { 
+                bg = new Color(0xFE, 0xF3, 0xC7); // amber-100
+                fg = new Color(0xB4, 0x53, 0x09); // amber-700
+            }
+            case "COMPLETED" -> { 
+                bg = new Color(0xF1, 0xF5, 0xF9); // slate-100
+                fg = new Color(0x47, 0x55, 0x69); // slate-600
+            }
+            default -> { 
+                bg = new Color(0xF1, 0xF5, 0xF9); 
+                fg = new Color(0x47, 0x55, 0x69); 
+            }
         }
         setToolTipText(text);
         repaint();
@@ -57,13 +75,16 @@ public class Badge extends JComponent {
         if (!text.isEmpty()) {
             g2.setFont(Theme.sansBold(11));
             FontMetrics fm = g2.getFontMetrics();
-            int w = fm.stringWidth(text) + 18;
+            int w = fm.stringWidth(text) + 16;
             int h = 20;
+            int x = isOpaque() ? 8 : 0;
             int y = (getHeight() - h) / 2;
             g2.setColor(bg);
-            g2.fillRoundRect(isOpaque() ? 8 : 0, y, w, h, 4, 4);
+            g2.fillRoundRect(x, y, w, h, 6, 6);
+            g2.setColor(new Color(fg.getRed(), fg.getGreen(), fg.getBlue(), 60));
+            g2.drawRoundRect(x, y, w, h, 6, 6);
             g2.setColor(fg);
-            g2.drawString(text, (isOpaque() ? 8 : 0) + 9, y + (h - fm.getHeight()) / 2 + fm.getAscent());
+            g2.drawString(text, x + 8, y + (h - fm.getHeight()) / 2 + fm.getAscent());
         }
         g2.dispose();
     }
