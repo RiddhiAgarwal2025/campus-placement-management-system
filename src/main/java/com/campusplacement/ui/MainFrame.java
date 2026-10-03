@@ -4,6 +4,7 @@ import com.campusplacement.model.User;
 import com.campusplacement.service.AuthService;
 import com.campusplacement.ui.components.Btn;
 import com.campusplacement.ui.components.Dialogs;
+import com.campusplacement.ui.components.HintField;
 import com.campusplacement.ui.components.Icons;
 import com.campusplacement.ui.components.Icons.Glyph;
 import com.campusplacement.ui.components.Page;
@@ -34,6 +35,7 @@ import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
@@ -68,6 +70,7 @@ public class MainFrame extends JFrame {
     private JLabel mark;
     private JLabel name;
     private JLabel roleLabel;
+    private HintField topSearch;
 
     public MainFrame(User user) {
         super("Campus Placements");
@@ -131,6 +134,10 @@ public class MainFrame extends JFrame {
             }
             if (name != null) name.setForeground(Theme.TEXT);
             if (roleLabel != null) roleLabel.setForeground(Theme.MUTED);
+            if (topSearch != null) {
+                Ui.style(topSearch);
+                topSearch.repaint();
+            }
             items.values().forEach(NavItem::updateLook);
 
             content.removeAll();
@@ -169,19 +176,62 @@ public class MainFrame extends JFrame {
         brand.add(mark);
         b.add(brand, BorderLayout.WEST);
 
-        JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 14, 12));
+        // Center Pill Search Bar (inspired by Figma)
+        JPanel centerWrap = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 12));
+        centerWrap.setOpaque(false);
+        topSearch = Ui.search("Search students, companies, drives...");
+        Ui.style(topSearch);
+        topSearch.setPreferredSize(new Dimension(340, 34));
+        topSearch.addActionListener(e -> {
+            String q = topSearch.getText().trim();
+            if (!q.isEmpty()) {
+                navigate("applications");
+            }
+        });
+        centerWrap.add(topSearch);
+        b.add(centerWrap, BorderLayout.CENTER);
+
+        // Right Profile Avatar Pill & Dark Mode Toggle
+        JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 11));
         right.setOpaque(false);
 
-        JPanel info = Ui.vstack(2);
-        info.setOpaque(false);
-        name = Ui.label(user.displayName(), Theme.sansBold(13), Theme.TEXT);
-        name.setAlignmentX(RIGHT_ALIGNMENT);
-        String role = user.role() == User.Role.OFFICER ? "Placement Officer" : "Student • " + user.studentId();
-        roleLabel = Ui.label(role + "   •   " + Formats.date(LocalDate.now()), Theme.sans(11), Theme.MUTED);
-        roleLabel.setAlignmentX(RIGHT_ALIGNMENT);
-        info.add(name);
-        info.add(roleLabel);
-        right.add(info);
+        String initial = user.displayName().isEmpty() ? "U" : user.displayName().substring(0, 1).toUpperCase();
+        JPanel userPill = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4)) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                Color bg = Theme.isDarkMode ? new Color(0x1B, 0x25, 0x36) : new Color(0xF1, 0xF5, 0xF9);
+                g2.setColor(bg);
+                g2.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 10, 10);
+                g2.setColor(Theme.BORDER);
+                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 10, 10);
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        userPill.setOpaque(false);
+        JLabel userAvatar = new JLabel() {
+            @Override
+            public Dimension getPreferredSize() { return new Dimension(24, 24); }
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(Theme.isDarkMode ? new Color(0x3B, 0x82, 0xF6) : Theme.PLUM);
+                g2.fillOval(0, 0, 23, 23);
+                g2.setColor(Color.WHITE);
+                g2.setFont(Theme.sansBold(11));
+                FontMetrics fm = g2.getFontMetrics();
+                int sw = fm.stringWidth(initial);
+                g2.drawString(initial, (24 - sw) / 2, 16);
+                g2.dispose();
+            }
+        };
+        userPill.add(userAvatar);
+        name = Ui.label(user.displayName(), Theme.sansBold(12), Theme.TEXT);
+        userPill.add(name);
+        right.add(userPill);
 
         modeBtn = new Btn(Theme.isDarkMode ? "Light Mode" : "Dark Mode", Btn.Variant.SECONDARY);
         modeBtn.setPreferredSize(new Dimension(96, 32));

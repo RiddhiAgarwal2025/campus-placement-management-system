@@ -1,59 +1,33 @@
 package com.campusplacement.ui.officer;
 
-import com.campusplacement.model.Application;
-import com.campusplacement.model.Drive;
-import com.campusplacement.model.Offer;
 import com.campusplacement.service.DashboardService;
-import com.campusplacement.ui.MainFrame;
 import com.campusplacement.ui.components.Btn;
-import com.campusplacement.ui.components.DataTable;
-import com.campusplacement.ui.components.DataTable.Kind;
+import com.campusplacement.ui.components.DepartmentBarChartCard;
 import com.campusplacement.ui.components.Icons.Glyph;
+import com.campusplacement.ui.components.OfferVelocityLineChartCard;
 import com.campusplacement.ui.components.Page;
-import com.campusplacement.ui.components.PlacementFunnelPanel;
-import com.campusplacement.ui.components.SegmentedControl;
-import com.campusplacement.ui.components.Theme;
+import com.campusplacement.ui.components.StatusDonutChartCard;
+import com.campusplacement.ui.components.TopCompaniesListCard;
 import com.campusplacement.ui.components.Ui;
-import com.campusplacement.util.Formats;
 import java.awt.BorderLayout;
-import java.awt.CardLayout;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+/**
+ * 4-Quadrant Visual Executive Dashboard directly inspired by Dwinawan's Figma design:
+ * - Top-Left: Highlights KPI & Engineering Department Bar Chart
+ * - Top-Right: Pipeline Conversion Status Donut Chart
+ * - Bottom-Left: Top Recruiting Partners & Active Drives List
+ * - Bottom-Right: Submission & Offer Velocity Multi-Line Trend Chart
+ */
 public class OfficerDashboardPage extends Page {
     private final DashboardService service = new DashboardService();
-    private final PlacementFunnelPanel funnel = new PlacementFunnelPanel();
-
-    private final DataTable<Drive> upcoming = new DataTable<Drive>("No upcoming drives", "Create a drive to see it here.")
-            .col("Company", Drive::companyName, 140)
-            .col("Position", Drive::position, 140)
-            .col("Deadline", Drive::deadline, 90, Kind.DATE)
-            .col("Due", d -> Formats.relative(d.deadline()), 80)
-            .col("Applied", Drive::applicationCount, 55, Kind.NUMBER)
-            .col("Status", Drive::status, 80, Kind.BADGE);
-
-    private final DataTable<Application> recentApps = new DataTable<Application>("No applications yet",
-            "Students apply from their own accounts.")
-            .col("Applied", Application::appliedAt, 125, Kind.DATE)
-            .col("Student ID", Application::studentId, 85)
-            .col("Student", Application::studentName, 130)
-            .col("Dept", Application::deptCode, 60)
-            .col("Company", Application::companyName, 140)
-            .col("Position", Application::position, 150)
-            .col("Status", Application::status, 90, Kind.BADGE);
-
-    private final DataTable<Offer> recentOffers = new DataTable<Offer>("No offers yet", "Offers appear after selection.")
-            .col("Student", Offer::studentName, 115)
-            .col("Company", Offer::companyName, 115)
-            .col("Package", Offer::packageLpa, 85, Kind.MONEY)
-            .col("Status", Offer::status, 85, Kind.BADGE);
+    private final DepartmentBarChartCard barChart = new DepartmentBarChartCard();
+    private final StatusDonutChartCard donutChart = new StatusDonutChartCard();
+    private final TopCompaniesListCard companiesCard = new TopCompaniesListCard();
+    private final OfferVelocityLineChartCard lineChart = new OfferVelocityLineChartCard();
 
     public OfficerDashboardPage() {
         super("Dashboard", "Placement season at a glance, read live from the database.");
@@ -61,107 +35,41 @@ public class OfficerDashboardPage extends Page {
         refresh.addActionListener(e -> refresh());
         addAction(refresh);
 
-        // Main Vertical Container
-        JPanel main = Ui.vstack(16);
-        main.setOpaque(false);
-
-        // 1. Top Hero: Placement Funnel Component
-        funnel.setPreferredSize(new Dimension(100, 150));
-        main.add(funnel);
-
-        // 2. Bottom 65 / 35 Split Container
-        JPanel splitGrid = new JPanel(new GridBagLayout());
-        splitGrid.setOpaque(false);
+        JPanel grid = new JPanel(new GridBagLayout());
+        grid.setOpaque(false);
         GridBagConstraints g = new GridBagConstraints();
         g.fill = GridBagConstraints.BOTH;
-        g.weighty = 1.0;
+        g.weighty = 0.5;
 
-        // --- Left 65% Primary Card: Upcoming Drives & Recent Submissions with SegmentedControl ---
-        CardLayout cardLayout = new CardLayout();
-        JPanel switchableTables = new JPanel(cardLayout);
-        switchableTables.setOpaque(false);
-        switchableTables.add(upcoming, "drives");
-        switchableTables.add(recentApps, "apps");
-
-        SegmentedControl seg = new SegmentedControl("Upcoming Drives", "Recent Applications");
-        Btn viewAllBtn = new Btn("All drives \u2192", Btn.Variant.GHOST);
-        viewAllBtn.addActionListener(e -> {
-            if (seg.getSelectedIndex() == 0) {
-                MainFrame.navigate("drives");
-            } else {
-                MainFrame.navigate("applications");
-            }
-        });
-
-        seg.onSelect(idx -> {
-            if (idx == 0) {
-                cardLayout.show(switchableTables, "drives");
-                viewAllBtn.setText("All drives \u2192");
-            } else {
-                cardLayout.show(switchableTables, "apps");
-                viewAllBtn.setText("All applications \u2192");
-            }
-        });
-
-        JPanel leftHead = new JPanel(new BorderLayout());
-        leftHead.setOpaque(false);
-        leftHead.setBorder(BorderFactory.createEmptyBorder(0, 0, 12, 0));
-        leftHead.add(seg, BorderLayout.WEST);
-        leftHead.add(viewAllBtn, BorderLayout.EAST);
-
-        JPanel leftCardBody = new JPanel(new BorderLayout());
-        leftCardBody.setOpaque(false);
-        leftCardBody.add(leftHead, BorderLayout.NORTH);
-        leftCardBody.add(switchableTables, BorderLayout.CENTER);
-        JPanel leftCard = Ui.card(leftCardBody, 18);
+        // --- Row 0: Bar Chart (Top-Left 58%) & Donut Chart (Top-Right 42%) ---
+        g.gridy = 0;
 
         g.gridx = 0;
-        g.weightx = 0.64;
-        g.insets = new Insets(0, 0, 0, 10);
-        splitGrid.add(leftCard, g);
-
-        // --- Right 35% Activity Card: Recent Offers & Placements ---
-        Btn allOffersBtn = new Btn("All offers \u2192", Btn.Variant.GHOST);
-        allOffersBtn.addActionListener(e -> MainFrame.navigate("offers"));
-
-        JPanel rightHead = new JPanel(new BorderLayout());
-        rightHead.setOpaque(false);
-        JPanel rightTitles = Ui.vstack(1);
-        rightTitles.setOpaque(false);
-        rightTitles.add(Ui.heading("Recent Offers"));
-        rightTitles.add(Ui.muted("Latest compensation & acceptance"));
-        rightHead.add(rightTitles, BorderLayout.WEST);
-        rightHead.add(allOffersBtn, BorderLayout.EAST);
-        rightHead.setBorder(BorderFactory.createEmptyBorder(0, 0, 12, 0));
-
-        // Quick action shortcuts footer
-        JPanel shortcuts = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
-        shortcuts.setOpaque(false);
-        shortcuts.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
-        Btn newDriveBtn = new Btn("+ New Drive", Btn.Variant.SECONDARY);
-        newDriveBtn.addActionListener(e -> MainFrame.navigate("drives"));
-        Btn reportsBtn = new Btn("Reports", Btn.Variant.SECONDARY);
-        reportsBtn.addActionListener(e -> MainFrame.navigate("reports"));
-        shortcuts.add(newDriveBtn);
-        shortcuts.add(reportsBtn);
-
-        JPanel rightCardBody = new JPanel(new BorderLayout());
-        rightCardBody.setOpaque(false);
-        rightCardBody.add(rightHead, BorderLayout.NORTH);
-        rightCardBody.add(recentOffers, BorderLayout.CENTER);
-        rightCardBody.add(shortcuts, BorderLayout.SOUTH);
-        JPanel rightCard = Ui.card(rightCardBody, 18);
+        g.weightx = 0.58;
+        g.insets = new Insets(0, 0, 14, 12);
+        grid.add(barChart, g);
 
         g.gridx = 1;
-        g.weightx = 0.36;
-        g.insets = new Insets(0, 0, 0, 0);
-        splitGrid.add(rightCard, g);
+        g.weightx = 0.42;
+        g.insets = new Insets(0, 0, 14, 0);
+        grid.add(donutChart, g);
 
-        main.add(splitGrid);
+        // --- Row 1: Top Companies (Bottom-Left 52%) & Line Chart (Bottom-Right 48%) ---
+        g.gridy = 1;
+
+        g.gridx = 0;
+        g.weightx = 0.52;
+        g.insets = new Insets(0, 0, 0, 12);
+        grid.add(companiesCard, g);
+
+        g.gridx = 1;
+        g.weightx = 0.48;
+        g.insets = new Insets(0, 0, 0, 0);
+        grid.add(lineChart, g);
 
         JPanel wrap = new JPanel(new BorderLayout());
         wrap.setOpaque(false);
-        wrap.add(main, BorderLayout.CENTER);
+        wrap.add(grid, BorderLayout.CENTER);
         setBody(wrap);
     }
 
@@ -180,9 +88,9 @@ public class OfficerDashboardPage extends Page {
         int off = d.stats().get("offers").intValue();
         int acc = d.stats().get("accepted").intValue();
 
-        funnel.update(stud, comp, act, apps, sh, off, acc);
-        upcoming.setRows(d.upcoming());
-        recentOffers.setRows(d.recentOffers());
-        recentApps.setRows(d.recentApplications());
+        barChart.updateData("\u20B9 14.50 LPA", acc);
+        donutChart.updateData(apps, sh, off, acc);
+        companiesCard.updateDrives(d.upcoming());
+        lineChart.updateData(apps, off);
     }
 }
