@@ -71,20 +71,20 @@ public class Btn extends JButton {
         switch (variant) {
             case PRIMARY -> {
                 g2.setColor(!enabled ? Theme.MUTED : hover ? (Theme.isDarkMode ? Color.WHITE : Theme.DEEP_PLUM) : (Theme.isDarkMode ? Theme.PLUM : Theme.PLUM));
-                g2.fillRoundRect(0, 0, w - 1, h - 1, 6, 6);
+                g2.fillRoundRect(0, 0, w - 1, h - 1, 8, 8);
             }
             case SECONDARY, DANGER -> {
                 Color fill = hover && enabled ? (variant == Variant.DANGER ? Theme.BRICK_BG : (Theme.isDarkMode ? Theme.LIGHT_PLUM : Theme.BG)) : Theme.SURFACE;
                 g2.setColor(fill);
-                g2.fillRoundRect(0, 0, w - 1, h - 1, 6, 6);
+                g2.fillRoundRect(0, 0, w - 1, h - 1, 8, 8);
                 Color border = variant == Variant.DANGER && enabled ? (Theme.isDarkMode ? new Color(0x60, 0x30, 0x33) : new Color(0xDC, 0xC4, 0xC1)) : Theme.BORDER;
                 g2.setColor(border);
-                g2.drawRoundRect(0, 0, w - 1, h - 1, 6, 6);
+                g2.drawRoundRect(0, 0, w - 1, h - 1, 8, 8);
             }
             case GHOST -> {
                 if (hover && enabled) {
                     g2.setColor(Theme.LIGHT_PLUM);
-                    g2.fillRoundRect(0, 0, w - 1, h - 1, 6, 6);
+                    g2.fillRoundRect(0, 0, w - 1, h - 1, 8, 8);
                 }
             }
         }

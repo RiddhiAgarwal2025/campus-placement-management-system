@@ -6,13 +6,17 @@ import com.campusplacement.model.User;
 import com.campusplacement.service.AuthService;
 import com.campusplacement.service.ServiceException;
 import com.campusplacement.ui.components.Btn;
+import com.campusplacement.ui.components.SegmentedControl;
 import com.campusplacement.ui.components.Theme;
 import com.campusplacement.ui.components.Ui;
 import java.awt.BorderLayout;
 import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.RenderingHints;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.JFrame;
@@ -60,12 +64,24 @@ public class LoginFrame extends JFrame {
     }
 
     private JPanel cardPanel() {
-        card = new JPanel(new BorderLayout());
-        card.setBackground(Theme.SURFACE);
-        card.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(Theme.BORDER),
-                BorderFactory.createEmptyBorder(36, 32, 36, 32)));
-        card.setPreferredSize(new Dimension(460, 540));
+        card = new JPanel(new BorderLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                int w = getWidth();
+                int h = getHeight();
+                g2.setColor(Theme.SURFACE);
+                g2.fillRoundRect(0, 0, w - 1, h - 1, 16, 16);
+                g2.setColor(Theme.BORDER);
+                g2.drawRoundRect(0, 0, w - 1, h - 1, 16, 16);
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        card.setOpaque(false);
+        card.setBorder(BorderFactory.createEmptyBorder(36, 36, 36, 36));
+        card.setPreferredSize(new Dimension(460, 560));
 
         JPanel form = Ui.vstack(0);
 
@@ -80,12 +96,31 @@ public class LoginFrame extends JFrame {
         brand.add(modeBtn, BorderLayout.EAST);
 
         form.add(left(brand));
-        form.add(Box.createVerticalStrut(16));
+        form.add(Box.createVerticalStrut(18));
 
-        form.add(left(Ui.label("Sign in to Placement Portal", Theme.sansBold(19), Theme.TEXT)));
+        JLabel titleLbl = Ui.label("Sign in to Placement Portal", Theme.sansBold(20), Theme.TEXT);
+        titleLbl.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 12));
+        form.add(left(titleLbl));
         form.add(Box.createVerticalStrut(6));
         form.add(left(Ui.muted("Manage drives, review candidates, and process offers.")));
-        form.add(Box.createVerticalStrut(24));
+        form.add(Box.createVerticalStrut(20));
+
+        // Segmented role switch
+        SegmentedControl roleSwitch = new SegmentedControl("Placement Officer", "Student Candidate");
+        roleSwitch.setPreferredSize(new Dimension(360, 36));
+        roleSwitch.setMaximumSize(new Dimension(360, 36));
+        roleSwitch.onSelect(idx -> {
+            if (idx == 0) {
+                username.setText("officer");
+                password.setText("Officer@123");
+            } else {
+                username.setText("21CSE001");
+                password.setText("Student@123");
+            }
+            message.setText(" ");
+        });
+        form.add(left(roleSwitch));
+        form.add(Box.createVerticalStrut(18));
 
         form.add(left(Ui.fieldLabel("Username")));
         form.add(Box.createVerticalStrut(6));
@@ -98,35 +133,14 @@ public class LoginFrame extends JFrame {
         form.add(Box.createVerticalStrut(10));
 
         form.add(left(message));
-        form.add(Box.createVerticalStrut(12));
+        form.add(Box.createVerticalStrut(14));
 
         Btn signIn = new Btn("Sign in", Btn.Variant.PRIMARY);
         signIn.setPreferredSize(new Dimension(360, 40));
         signIn.setMaximumSize(new Dimension(360, 40));
         signIn.addActionListener(e -> login());
         form.add(left(signIn));
-        form.add(Box.createVerticalStrut(10));
-
-        JPanel presets = new JPanel(new java.awt.GridLayout(1, 2, 8, 0));
-        presets.setBackground(Theme.SURFACE);
-        presets.setPreferredSize(new Dimension(360, 32));
-        presets.setMaximumSize(new Dimension(360, 32));
-        Btn offBtn = new Btn("Fill: Officer", Btn.Variant.SECONDARY);
-        offBtn.addActionListener(e -> {
-            username.setText("officer");
-            password.setText("Officer@123");
-            message.setText(" ");
-        });
-        Btn stuBtn = new Btn("Fill: Student", Btn.Variant.SECONDARY);
-        stuBtn.addActionListener(e -> {
-            username.setText("21CSE001");
-            password.setText("Student@123");
-            message.setText(" ");
-        });
-        presets.add(offBtn);
-        presets.add(stuBtn);
-        form.add(left(presets));
-        form.add(Box.createVerticalStrut(12));
+        form.add(Box.createVerticalStrut(14));
 
         Btn test = new Btn("Test database connection", Btn.Variant.GHOST);
         test.setBorder(BorderFactory.createEmptyBorder(6, 0, 6, 0));

@@ -75,14 +75,14 @@ public class Badge extends JComponent {
         if (!text.isEmpty()) {
             g2.setFont(Theme.sansBold(11));
             FontMetrics fm = g2.getFontMetrics();
-            int w = fm.stringWidth(text) + 16;
-            int h = 20;
+            int h = 22;
+            int w = fm.stringWidth(text) + 20;
             int x = isOpaque() ? 8 : 0;
             int y = (getHeight() - h) / 2;
             g2.setColor(bg);
-            g2.fillRoundRect(x, y, w, h, 4, 4);
+            g2.fillRoundRect(x, y, w, h, h, h);
             g2.setColor(fg);
-            g2.drawString(text, x + 8, y + (h - fm.getHeight()) / 2 + fm.getAscent());
+            g2.drawString(text, x + 10, y + (h - fm.getHeight()) / 2 + fm.getAscent());
         }
         g2.dispose();
     }

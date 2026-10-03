@@ -44,12 +44,16 @@ public class DataTable<T> extends JPanel {
 
     /** Fills the viewport when columns fit; otherwise keeps preferred widths and scrolls horizontally. */
     private void fitColumns(JScrollPane sp) {
+        int vw = sp.getViewport().getWidth();
+        if (vw <= 0) {
+            return;
+        }
         int total = 0;
         for (int i = 0; i < table.getColumnCount(); i++) {
             int w = i < columns.size() && columns.get(i).width() > 0 ? columns.get(i).width() : 120;
             total += w;
         }
-        int mode = sp.getViewport().getWidth() >= total ? JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS : JTable.AUTO_RESIZE_OFF;
+        int mode = vw >= total ? JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS : JTable.AUTO_RESIZE_OFF;
         if (table.getAutoResizeMode() != mode) {
             table.setAutoResizeMode(mode);
             for (int i = 0; i < table.getColumnCount() && i < columns.size(); i++) {

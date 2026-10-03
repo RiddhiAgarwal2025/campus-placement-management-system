@@ -146,12 +146,25 @@ public final class Ui {
         }
     }
 
-    /** White surface with a hairline border. */
+    /** Apple / Windows 11 Fluent rounded elevated card with hairline border. */
     public static JPanel card(JComponent content, int pad) {
-        JPanel p = new JPanel(new BorderLayout());
-        p.setBackground(Theme.SURFACE);
-        p.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Theme.BORDER),
-                BorderFactory.createEmptyBorder(pad, pad, pad, pad)));
+        JPanel p = new JPanel(new BorderLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                int w = getWidth();
+                int h = getHeight();
+                g2.setColor(Theme.SURFACE);
+                g2.fillRoundRect(0, 0, w - 1, h - 1, 14, 14);
+                g2.setColor(Theme.BORDER);
+                g2.drawRoundRect(0, 0, w - 1, h - 1, 14, 14);
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        p.setOpaque(false);
+        p.setBorder(BorderFactory.createEmptyBorder(pad, pad, pad, pad));
         p.add(content, BorderLayout.CENTER);
         return p;
     }
