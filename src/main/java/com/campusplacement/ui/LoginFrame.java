@@ -26,22 +26,41 @@ public class LoginFrame extends JFrame {
     private final JTextField username = Ui.field("officer");
     private final JPasswordField password = Ui.password();
     private final JLabel message = Ui.label(" ", Theme.sans(12), Theme.BRICK);
+    private JPanel root;
+    private JPanel card;
+    private Btn modeBtn;
 
     public LoginFrame() {
         super("Campus Placement Portal — Sign in");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         password.setText("Officer@123");
-        JPanel root = new JPanel(new GridBagLayout());
+        root = new JPanel(new GridBagLayout());
         root.setBackground(Theme.BG);
         root.add(cardPanel());
         setContentPane(root);
         setSize(580, 660);
         setMinimumSize(new Dimension(520, 600));
         setLocationRelativeTo(null);
+
+        Theme.addListener(() -> {
+            String u = username.getText();
+            char[] p = password.getPassword();
+            Ui.style(username);
+            Ui.style(password);
+            getContentPane().removeAll();
+            root = new JPanel(new GridBagLayout());
+            root.setBackground(Theme.BG);
+            root.add(cardPanel());
+            username.setText(u);
+            password.setText(new String(p));
+            setContentPane(root);
+            revalidate();
+            repaint();
+        });
     }
 
     private JPanel cardPanel() {
-        JPanel card = new JPanel(new BorderLayout());
+        card = new JPanel(new BorderLayout());
         card.setBackground(Theme.SURFACE);
         card.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(Theme.BORDER),
@@ -54,6 +73,12 @@ public class LoginFrame extends JFrame {
         brand.setOpaque(false);
         JLabel mark = Ui.label("UNIVERSITY PLACEMENT CELL", Theme.sansBold(11), Theme.MUTED);
         brand.add(mark, BorderLayout.WEST);
+
+        modeBtn = new Btn(Theme.isDarkMode ? "Light Mode" : "Dark Mode", Btn.Variant.GHOST);
+        modeBtn.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 4));
+        modeBtn.addActionListener(e -> Theme.toggleDarkMode());
+        brand.add(modeBtn, BorderLayout.EAST);
+
         form.add(left(brand));
         form.add(Box.createVerticalStrut(16));
 

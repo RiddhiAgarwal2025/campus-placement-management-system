@@ -11,7 +11,7 @@ import javax.swing.JComponent;
 import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
 
-/** Small pill showing a status value with restrained colour coding. */
+/** Small pill showing a status value with restrained, dignified colour coding. */
 public class Badge extends JComponent {
     private String text = "";
     private Color bg = Theme.STONE_BG;
@@ -27,29 +27,29 @@ public class Badge extends JComponent {
         String v = value == null ? "" : value;
         this.text = v.replace('_', ' ');
         switch (v) {
-            case "SELECTED", "ACCEPTED", "PASS", "OPEN", "ELIGIBLE", "PLACED" -> { 
-                bg = new Color(0xDC, 0xFC, 0xE7); // emerald-100
-                fg = new Color(0x15, 0x80, 0x3D); // emerald-700
+            case "SELECTED", "ACCEPTED", "PASS", "OPEN", "ELIGIBLE", "PLACED" -> {
+                bg = Theme.isDarkMode ? new Color(0x22, 0x33, 0x47) : Theme.PLUM;
+                fg = Theme.isDarkMode ? new Color(0xF1, 0xF5, 0xF9) : Theme.SURFACE;
             }
-            case "SHORTLISTED", "IN_PROGRESS", "YES" -> { 
-                bg = new Color(0xEE, 0xF2, 0xFF); // indigo-50
-                fg = new Color(0x43, 0x38, 0xCA); // indigo-700
+            case "SHORTLISTED", "IN_PROGRESS", "YES" -> {
+                bg = Theme.LIGHT_PLUM;
+                fg = Theme.isDarkMode ? Theme.TEXT : Theme.DEEP_PLUM;
             }
-            case "REJECTED", "FAIL", "NOT ELIGIBLE" -> { 
-                bg = new Color(0xFE, 0xE2, 0xE2); // rose-100
-                fg = new Color(0xB9, 0x1C, 0x1C); // rose-700
+            case "REJECTED", "FAIL", "NOT ELIGIBLE" -> {
+                bg = Theme.BRICK_BG;
+                fg = Theme.BRICK;
             }
-            case "PENDING", "UPCOMING", "AWAITING" -> { 
-                bg = new Color(0xFE, 0xF3, 0xC7); // amber-100
-                fg = new Color(0xB4, 0x53, 0x09); // amber-700
+            case "PENDING", "UPCOMING", "AWAITING" -> {
+                bg = Theme.OCHRE_BG;
+                fg = Theme.OCHRE;
             }
-            case "COMPLETED" -> { 
-                bg = new Color(0xF1, 0xF5, 0xF9); // slate-100
-                fg = new Color(0x47, 0x55, 0x69); // slate-600
+            case "COMPLETED", "CLOSED" -> {
+                bg = Theme.STONE_BG;
+                fg = Theme.MUTED;
             }
-            default -> { 
-                bg = new Color(0xF1, 0xF5, 0xF9); 
-                fg = new Color(0x47, 0x55, 0x69); 
+            default -> {
+                bg = Theme.STONE_BG;
+                fg = Theme.MUTED;
             }
         }
         setToolTipText(text);
@@ -59,7 +59,7 @@ public class Badge extends JComponent {
     @Override
     public Dimension getPreferredSize() {
         FontMetrics fm = getFontMetrics(Theme.sansBold(11));
-        return new Dimension(fm.stringWidth(text) + 22, 24);
+        return new Dimension(fm.stringWidth(text) + 20, 24);
     }
 
     @Override
@@ -70,7 +70,7 @@ public class Badge extends JComponent {
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        g2.setColor(rowBg);
+        g2.setColor(rowBg != null ? rowBg : (Theme.isDarkMode ? Theme.SURFACE : Color.WHITE));
         g2.fillRect(0, 0, getWidth(), getHeight());
         if (!text.isEmpty()) {
             g2.setFont(Theme.sansBold(11));
@@ -80,9 +80,7 @@ public class Badge extends JComponent {
             int x = isOpaque() ? 8 : 0;
             int y = (getHeight() - h) / 2;
             g2.setColor(bg);
-            g2.fillRoundRect(x, y, w, h, 6, 6);
-            g2.setColor(new Color(fg.getRed(), fg.getGreen(), fg.getBlue(), 60));
-            g2.drawRoundRect(x, y, w, h, 6, 6);
+            g2.fillRoundRect(x, y, w, h, 4, 4);
             g2.setColor(fg);
             g2.drawString(text, x + 8, y + (h - fm.getHeight()) / 2 + fm.getAscent());
         }

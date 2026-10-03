@@ -90,7 +90,7 @@ public class DataTable<T> extends JPanel {
         header.setReorderingAllowed(false);
         header.setPreferredSize(new Dimension(10, 36));
         header.setDefaultRenderer(new HeaderRenderer());
-        header.setBackground(new Color(0xF8, 0xFA, 0xFC));
+        header.setBackground(Theme.isDarkMode ? new Color(0x10, 0x17, 0x24) : new Color(0xF8, 0xFA, 0xFC));
         header.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Theme.BORDER));
 
         JScrollPane sp = new JScrollPane(table);
@@ -261,7 +261,7 @@ public class DataTable<T> extends JPanel {
             super.getTableCellRendererComponent(t, v, s, f, r, c);
             setFont(Theme.sansBold(11));
             setForeground(Theme.MUTED);
-            setBackground(new Color(0xF8, 0xFA, 0xFC));
+            setBackground(Theme.isDarkMode ? new Color(0x10, 0x17, 0x24) : new Color(0xF8, 0xFA, 0xFC));
             setBorder(BorderFactory.createEmptyBorder(0, 12, 0, 12));
             setHorizontalAlignment(LEFT);
             return this;

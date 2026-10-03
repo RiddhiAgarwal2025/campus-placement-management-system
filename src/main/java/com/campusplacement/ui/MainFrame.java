@@ -2,6 +2,7 @@ package com.campusplacement.ui;
 
 import com.campusplacement.model.User;
 import com.campusplacement.service.AuthService;
+import com.campusplacement.ui.components.Btn;
 import com.campusplacement.ui.components.Dialogs;
 import com.campusplacement.ui.components.Icons;
 import com.campusplacement.ui.components.Icons.Glyph;
@@ -32,6 +33,7 @@ import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
@@ -60,6 +62,12 @@ public class MainFrame extends JFrame {
     private final Map<String, Page> pages = new HashMap<>();
     private final Map<String, NavItem> items = new HashMap<>();
     private final List<Nav> navs = new ArrayList<>();
+    private JPanel bar;
+    private JPanel side;
+    private Btn modeBtn;
+    private JLabel mark;
+    private JLabel name;
+    private JLabel roleLabel;
 
     public MainFrame(User user) {
         super("Campus Placements");
@@ -89,16 +97,54 @@ public class MainFrame extends JFrame {
         }
 
         JPanel root = new JPanel(new BorderLayout());
-        root.add(topBar(user), BorderLayout.NORTH);
-        root.add(sidebar(), BorderLayout.WEST);
+        bar = topBar(user);
+        side = sidebar();
+        root.add(bar, BorderLayout.NORTH);
+        root.add(side, BorderLayout.WEST);
         content.setBackground(Theme.BG);
         root.add(content, BorderLayout.CENTER);
         setContentPane(root);
         setSize(1360, 840);
         setMinimumSize(new Dimension(1120, 700));
         setLocationRelativeTo(null);
+
+        Theme.addListener(() -> {
+            root.setBackground(Theme.BG);
+            content.setBackground(Theme.BG);
+            if (bar != null) {
+                bar.setBackground(Theme.SURFACE);
+                bar.setBorder(BorderFactory.createCompoundBorder(
+                        BorderFactory.createMatteBorder(0, 0, 1, 0, Theme.BORDER),
+                        BorderFactory.createEmptyBorder(0, 24, 0, 24)));
+            }
+            if (side != null) {
+                side.setBackground(Theme.SURFACE);
+                side.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, Theme.BORDER));
+            }
+            if (modeBtn != null) {
+                modeBtn.setText(Theme.isDarkMode ? "Light Mode" : "Dark Mode");
+                modeBtn.repaint();
+            }
+            if (mark != null) {
+                mark.setForeground(Theme.TEXT);
+                mark.setIcon(Icons.of(Glyph.DASHBOARD, 18, Theme.TEXT));
+            }
+            if (name != null) name.setForeground(Theme.TEXT);
+            if (roleLabel != null) roleLabel.setForeground(Theme.MUTED);
+            items.values().forEach(NavItem::updateLook);
+
+            content.removeAll();
+            pages.clear();
+            show(currentKey);
+
+            root.revalidate();
+            root.repaint();
+        });
+
         show("dashboard");
     }
+
+    private String currentKey = "dashboard";
 
     /** Navigates the current window to a page by key (used for cross-page links). */
     public static void navigate(String key) {
@@ -108,33 +154,42 @@ public class MainFrame extends JFrame {
     }
 
     private JPanel topBar(User user) {
-        JPanel bar = new JPanel(new BorderLayout());
-        bar.setBackground(Theme.SURFACE);
-        bar.setPreferredSize(new Dimension(10, 58));
-        bar.setBorder(BorderFactory.createCompoundBorder(
+        JPanel b = new JPanel(new BorderLayout());
+        b.setBackground(Theme.SURFACE);
+        b.setPreferredSize(new Dimension(10, 58));
+        b.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createMatteBorder(0, 0, 1, 0, Theme.BORDER),
                 BorderFactory.createEmptyBorder(0, 24, 0, 24)));
 
         JPanel brand = Ui.row();
         brand.setOpaque(false);
-        JLabel mark = Ui.label("CAMPUS PLACEMENTS", Theme.sansBold(14), Theme.TEXT);
+        mark = Ui.label("CAMPUS PLACEMENTS", Theme.sansBold(14), Theme.TEXT);
         mark.setIcon(Icons.of(Glyph.DASHBOARD, 18, Theme.TEXT));
         mark.setIconTextGap(10);
         brand.add(mark);
-        bar.add(brand, BorderLayout.WEST);
+        b.add(brand, BorderLayout.WEST);
 
-        JPanel right = Ui.vstack(2);
+        JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 14, 12));
         right.setOpaque(false);
-        right.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
-        JLabel name = Ui.label(user.displayName(), Theme.sansBold(13), Theme.TEXT);
+
+        JPanel info = Ui.vstack(2);
+        info.setOpaque(false);
+        name = Ui.label(user.displayName(), Theme.sansBold(13), Theme.TEXT);
         name.setAlignmentX(RIGHT_ALIGNMENT);
         String role = user.role() == User.Role.OFFICER ? "Placement Officer" : "Student • " + user.studentId();
-        JLabel roleLabel = Ui.label(role + "   •   " + Formats.date(LocalDate.now()), Theme.sans(11), Theme.MUTED);
+        roleLabel = Ui.label(role + "   •   " + Formats.date(LocalDate.now()), Theme.sans(11), Theme.MUTED);
         roleLabel.setAlignmentX(RIGHT_ALIGNMENT);
-        right.add(name);
-        right.add(roleLabel);
-        bar.add(right, BorderLayout.EAST);
-        return bar;
+        info.add(name);
+        info.add(roleLabel);
+        right.add(info);
+
+        modeBtn = new Btn(Theme.isDarkMode ? "Light Mode" : "Dark Mode", Btn.Variant.SECONDARY);
+        modeBtn.setPreferredSize(new Dimension(96, 32));
+        modeBtn.addActionListener(e -> Theme.toggleDarkMode());
+        right.add(modeBtn);
+
+        b.add(right, BorderLayout.EAST);
+        return b;
     }
 
     private JPanel sidebar() {
@@ -176,6 +231,7 @@ public class MainFrame extends JFrame {
         if (nav == null) {
             return;
         }
+        this.currentKey = key;
         Page page = pages.get(key);
         if (page == null) {
             page = nav.factory().get();
@@ -185,6 +241,8 @@ public class MainFrame extends JFrame {
         items.forEach((k, item) -> item.setActive(k.equals(key)));
         cards.show(content, key);
         page.refresh();
+        content.revalidate();
+        content.repaint();
     }
 
     private void logout() {
@@ -235,10 +293,10 @@ public class MainFrame extends JFrame {
         }
 
         private void updateLook() {
-            Color c = active ? Theme.TEXT : (hover ? new Color(0x1E, 0x29, 0x3B) : Theme.MUTED);
+            Color c = active ? Theme.TEXT : (hover ? (Theme.isDarkMode ? Color.WHITE : new Color(0x1E, 0x29, 0x3B)) : Theme.MUTED);
             label.setForeground(c);
             label.setFont(active ? Theme.sansBold(13) : Theme.sans(13));
-            Color iconColor = active ? Theme.TEXT : (hover ? new Color(0x33, 0x41, 0x55) : new Color(0x94, 0xA3, 0xB8));
+            Color iconColor = active ? Theme.TEXT : (hover ? (Theme.isDarkMode ? Color.WHITE : new Color(0x33, 0x41, 0x55)) : (Theme.isDarkMode ? new Color(0x64, 0x74, 0x8B) : new Color(0x94, 0xA3, 0xB8)));
             label.setIcon(Icons.of(glyph, 16, iconColor));
         }
 
@@ -249,12 +307,12 @@ public class MainFrame extends JFrame {
             int w = getWidth();
             int h = getHeight();
             if (active) {
-                g2.setColor(new Color(0xF1, 0xF5, 0xF9));
+                g2.setColor(Theme.isDarkMode ? new Color(0x22, 0x2E, 0x42) : new Color(0xF1, 0xF5, 0xF9));
                 g2.fillRoundRect(0, 0, w, h, 6, 6);
-                g2.setColor(Theme.PLUM);
+                g2.setColor(Theme.isDarkMode ? new Color(0x93, 0xC5, 0xFD) : Theme.PLUM);
                 g2.fillRoundRect(0, 6, 3, h - 12, 2, 2);
             } else if (hover) {
-                g2.setColor(new Color(0xF8, 0xFA, 0xFC));
+                g2.setColor(Theme.isDarkMode ? new Color(0x19, 0x23, 0x35) : new Color(0xF8, 0xFA, 0xFC));
                 g2.fillRoundRect(0, 0, w, h, 6, 6);
             }
             g2.dispose();

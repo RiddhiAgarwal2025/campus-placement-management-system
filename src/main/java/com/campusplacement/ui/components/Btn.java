@@ -11,7 +11,7 @@ import java.awt.event.MouseEvent;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 
-/** Custom-painted button in four variants; never uses the default Swing button rendering. */
+/** Custom-painted button in four variants; supports light and dark modes gracefully. */
 public class Btn extends JButton {
     public enum Variant { PRIMARY, SECONDARY, GHOST, DANGER }
 
@@ -48,9 +48,9 @@ public class Btn extends JButton {
 
     private Color fg() {
         return switch (variant) {
-            case PRIMARY -> Theme.SURFACE;
+            case PRIMARY -> Theme.isDarkMode ? Theme.BG : Theme.SURFACE;
             case SECONDARY -> Theme.TEXT;
-            case GHOST -> Theme.PLUM;
+            case GHOST -> Theme.TEXT;
             case DANGER -> Theme.BRICK;
         };
     }
@@ -70,13 +70,15 @@ public class Btn extends JButton {
         boolean enabled = isEnabled();
         switch (variant) {
             case PRIMARY -> {
-                g2.setColor(!enabled ? new Color(0xB9A8B4) : hover ? Theme.DEEP_PLUM : Theme.PLUM);
+                g2.setColor(!enabled ? Theme.MUTED : hover ? (Theme.isDarkMode ? Color.WHITE : Theme.DEEP_PLUM) : (Theme.isDarkMode ? Theme.PLUM : Theme.PLUM));
                 g2.fillRoundRect(0, 0, w - 1, h - 1, 6, 6);
             }
             case SECONDARY, DANGER -> {
-                g2.setColor(hover && enabled ? (variant == Variant.DANGER ? Theme.BRICK_BG : Theme.BG) : Theme.SURFACE);
+                Color fill = hover && enabled ? (variant == Variant.DANGER ? Theme.BRICK_BG : (Theme.isDarkMode ? Theme.LIGHT_PLUM : Theme.BG)) : Theme.SURFACE;
+                g2.setColor(fill);
                 g2.fillRoundRect(0, 0, w - 1, h - 1, 6, 6);
-                g2.setColor(variant == Variant.DANGER && enabled ? new Color(0xD9B8B2) : Theme.BORDER);
+                Color border = variant == Variant.DANGER && enabled ? (Theme.isDarkMode ? new Color(0x60, 0x30, 0x33) : new Color(0xDC, 0xC4, 0xC1)) : Theme.BORDER;
+                g2.setColor(border);
                 g2.drawRoundRect(0, 0, w - 1, h - 1, 6, 6);
             }
             case GHOST -> {

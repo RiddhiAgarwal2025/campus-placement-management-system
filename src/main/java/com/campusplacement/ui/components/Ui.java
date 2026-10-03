@@ -28,8 +28,12 @@ import javax.swing.border.Border;
 public final class Ui {
     private Ui() { }
 
-    public static final Border FIELD_BORDER = BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(Theme.BORDER), BorderFactory.createEmptyBorder(6, 9, 6, 9));
+    public static Border fieldBorder() {
+        return BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Theme.BORDER), BorderFactory.createEmptyBorder(6, 9, 6, 9));
+    }
+
+    public static Border FIELD_BORDER = fieldBorder();
 
     public static JLabel label(String text, Font font, Color color) {
         JLabel l = new JLabel(text);
@@ -88,12 +92,12 @@ public final class Ui {
         return sp;
     }
 
-    private static void style(JTextField f) {
+    public static void style(JTextField f) {
         f.setFont(Theme.sans(13));
         f.setForeground(Theme.TEXT);
-        f.setBackground(Theme.SURFACE);
-        f.setCaretColor(Theme.PLUM);
-        f.setBorder(FIELD_BORDER);
+        f.setBackground(Theme.FIELD_BG);
+        f.setCaretColor(Theme.TEXT);
+        f.setBorder(fieldBorder());
         f.setPreferredSize(new Dimension(Math.max(f.getPreferredSize().width, 220), 34));
     }
 
