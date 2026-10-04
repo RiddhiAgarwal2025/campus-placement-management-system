@@ -51,7 +51,7 @@ public class StudentDrivesPage extends Page {
             .col("Your application", d -> applied.getOrDefault(d.driveId(), ""), 130, Kind.BADGE)
             .col("Location", Drive::location, 100);
     private final StatTile kpiTotalDrives = new StatTile("Available Drives", "Active hiring campaigns", false);
-    private final StatTile kpiEligible = new StatTile("Eligible for You", "Criteria fully matched", true);
+    private final StatTile kpiEligible = new StatTile("Eligible for You", "Criteria fully matched", false);
     private final StatTile kpiOpen = new StatTile("Open for Application", "Accepting submissions", false);
     private final HintField search;
     private final JComboBox<String> show;

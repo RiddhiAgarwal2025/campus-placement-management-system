@@ -28,7 +28,7 @@ public class SkillsPage extends Page {
             .col("Students with skill", Skill::studentCount, 140, Kind.NUMBER);
     private final StatTile kpiTotalSkills = new StatTile("Skills Catalogue", "Registered competencies", false);
     private final StatTile kpiCategories = new StatTile("Skill Categories", "Functional domains", false);
-    private final StatTile kpiTopSkill = new StatTile("Most Endorsed", "Highest student count", true);
+    private final StatTile kpiTopSkill = new StatTile("Most Endorsed", "Highest student count", false);
     private final HintField search;
 
     public SkillsPage() {

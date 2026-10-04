@@ -53,7 +53,7 @@ public class SelectionPage extends Page {
             .multiSelect();
     private final StatTile kpiTotalRounds = new StatTile("Assessment Rounds", "Configured stages", false);
     private final StatTile kpiCandidates = new StatTile("Candidates", "Evaluating in round", false);
-    private final StatTile kpiPassed = new StatTile("Qualified", "Promoted to next stage", true);
+    private final StatTile kpiPassed = new StatTile("Qualified", "Promoted to next stage", false);
     private final StatTile kpiPending = new StatTile("Awaiting Decision", "To be recorded", false);
     private List<SelectionRound> rounds = List.of();
     private SelectionRound current;

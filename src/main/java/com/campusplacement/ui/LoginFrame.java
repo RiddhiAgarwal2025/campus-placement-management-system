@@ -33,6 +33,7 @@ public class LoginFrame extends JFrame {
     private JPanel root;
     private JPanel card;
     private Btn modeBtn;
+    private final Runnable themeListener = this::onThemeChanged;
 
     public LoginFrame() {
         super("Campus Placement Portal — Sign in");
@@ -46,21 +47,27 @@ public class LoginFrame extends JFrame {
         setMinimumSize(new Dimension(520, 600));
         setLocationRelativeTo(null);
 
-        Theme.addListener(() -> {
-            String u = username.getText();
-            char[] p = password.getPassword();
-            Ui.style(username);
-            Ui.style(password);
-            getContentPane().removeAll();
-            root = new JPanel(new GridBagLayout());
-            root.setBackground(Theme.BG);
-            root.add(cardPanel());
-            username.setText(u);
-            password.setText(new String(p));
-            setContentPane(root);
-            revalidate();
-            repaint();
-        });
+        Theme.addListener(themeListener);
+    }
+
+    private void onThemeChanged() {
+        if (!isDisplayable()) {
+            Theme.removeListener(themeListener);
+            return;
+        }
+        String u = username.getText();
+        char[] p = password.getPassword();
+        Ui.style(username);
+        Ui.style(password);
+        getContentPane().removeAll();
+        root = new JPanel(new GridBagLayout());
+        root.setBackground(Theme.BG);
+        root.add(cardPanel());
+        username.setText(u);
+        password.setText(new String(p));
+        setContentPane(root);
+        revalidate();
+        repaint();
     }
 
     private JPanel cardPanel() {
@@ -160,10 +167,21 @@ public class LoginFrame extends JFrame {
         return c;
     }
 
+    @Override
+    public void dispose() {
+        if (themeListener != null) {
+            Theme.removeListener(themeListener);
+        }
+        super.dispose();
+    }
+
     private void login() {
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
             User u = auth.login(username.getText(), new String(password.getPassword()));
+            if (themeListener != null) {
+                Theme.removeListener(themeListener);
+            }
             dispose();
             new MainFrame(u).setVisible(true);
         } catch (ServiceException ex) {

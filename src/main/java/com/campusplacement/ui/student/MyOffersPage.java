@@ -28,7 +28,7 @@ public class MyOffersPage extends Page {
     private final OfferService service = new OfferService();
     private final JPanel list = Ui.vstack(0);
     private final StatTile kpiTotal = new StatTile("Total Offers", "Extended to you", false);
-    private final StatTile kpiAccepted = new StatTile("Accepted", "Confirmed placement", true);
+    private final StatTile kpiAccepted = new StatTile("Accepted", "Confirmed placement", false);
     private final StatTile kpiMaxPkg = new StatTile("Top Package", "Highest offering", false);
 
     public MyOffersPage() {
@@ -53,7 +53,7 @@ public class MyOffersPage extends Page {
                 int h = getHeight();
                 g2.setColor(Theme.SURFACE);
                 g2.fillRoundRect(0, 0, w - 1, h - 1, 14, 14);
-                g2.setColor(pending ? (Theme.isDarkMode ? new Color(0x3B, 0x82, 0xF6) : Theme.PLUM) : Theme.BORDER);
+                g2.setColor(Theme.BORDER);
                 g2.drawRoundRect(0, 0, w - 1, h - 1, 14, 14);
                 g2.dispose();
                 super.paintComponent(g);

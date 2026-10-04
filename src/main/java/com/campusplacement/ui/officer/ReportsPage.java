@@ -38,7 +38,7 @@ public class ReportsPage extends Page {
     private final JLabel count = Ui.muted(" ");
     private final DataTable<Object[]> table = new DataTable<>("No rows", "This report returned no rows.");
     private final StatTile kpiTotalReports = new StatTile("Analytics Reports", "Configured SQL analyses", false);
-    private final StatTile kpiSelectedReport = new StatTile("Active Query", "Live analytical view", true);
+    private final StatTile kpiSelectedReport = new StatTile("Active Query", "Live analytical view", false);
     private final StatTile kpiRowCount = new StatTile("Records Returned", "Data points generated", false);
 
     public ReportsPage() {

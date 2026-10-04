@@ -30,7 +30,7 @@ public class MyApplicationsPage extends Page {
             .col("Application status", Application::status, 130, Kind.BADGE);
     private final StatTile kpiTotal = new StatTile("Total Submitted", "Applications on file", false);
     private final StatTile kpiShortlisted = new StatTile("Shortlisted", "Invited to rounds", false);
-    private final StatTile kpiSelected = new StatTile("Final Selections", "Passed all rounds", true);
+    private final StatTile kpiSelected = new StatTile("Final Selections", "Passed all rounds", false);
 
     public MyApplicationsPage() {
         super("My Applications", "Applications you have submitted and where each one stands.");

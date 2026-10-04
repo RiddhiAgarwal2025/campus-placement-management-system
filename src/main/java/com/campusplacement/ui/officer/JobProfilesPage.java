@@ -33,7 +33,7 @@ public class JobProfilesPage extends Page {
     private final DataTable<JobProfile> table = jobTable();
     private final StatTile kpiTotalJobs = new StatTile("Job Profiles", "Available career profiles", false);
     private final StatTile kpiAvgPkg = new StatTile("Average Package", "Mean compensation", false);
-    private final StatTile kpiMaxPkg = new StatTile("Top Package", "Highest offering", true);
+    private final StatTile kpiMaxPkg = new StatTile("Top Package", "Highest offering", false);
     private final HintField search;
     private JComboBox<Company> company;
     private boolean loading;

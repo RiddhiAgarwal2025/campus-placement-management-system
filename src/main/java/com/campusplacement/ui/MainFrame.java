@@ -71,6 +71,8 @@ public class MainFrame extends JFrame {
     private JLabel name;
     private JLabel roleLabel;
     private HintField topSearch;
+    private final JPanel root = new JPanel(new BorderLayout());
+    private final Runnable themeListener = this::onThemeChanged;
 
     public MainFrame(User user) {
         super("Campus Placements");
@@ -99,7 +101,6 @@ public class MainFrame extends JFrame {
             navs.add(new Nav("", "profile", "My Profile", Glyph.PROFILE, MyProfilePage::new));
         }
 
-        JPanel root = new JPanel(new BorderLayout());
         bar = topBar(user);
         side = sidebar();
         root.add(bar, BorderLayout.NORTH);
@@ -111,44 +112,56 @@ public class MainFrame extends JFrame {
         setMinimumSize(new Dimension(1120, 700));
         setLocationRelativeTo(null);
 
-        Theme.addListener(() -> {
-            root.setBackground(Theme.BG);
-            content.setBackground(Theme.BG);
-            if (bar != null) {
-                bar.setBackground(Theme.SURFACE);
-                bar.setBorder(BorderFactory.createCompoundBorder(
-                        BorderFactory.createMatteBorder(0, 0, 1, 0, Theme.BORDER),
-                        BorderFactory.createEmptyBorder(0, 24, 0, 24)));
-            }
-            if (side != null) {
-                side.setBackground(Theme.SURFACE);
-                side.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, Theme.BORDER));
-            }
-            if (modeBtn != null) {
-                modeBtn.setText(Theme.isDarkMode ? "Light Mode" : "Dark Mode");
-                modeBtn.repaint();
-            }
-            if (mark != null) {
-                mark.setForeground(Theme.TEXT);
-                mark.setIcon(Icons.of(Glyph.DASHBOARD, 18, Theme.TEXT));
-            }
-            if (name != null) name.setForeground(Theme.TEXT);
-            if (roleLabel != null) roleLabel.setForeground(Theme.MUTED);
-            if (topSearch != null) {
-                Ui.style(topSearch);
-                topSearch.repaint();
-            }
-            items.values().forEach(NavItem::updateLook);
+        Theme.addListener(themeListener);
 
+        show("dashboard");
+    }
+
+    private void onThemeChanged() {
+        if (current != this || !isDisplayable()) {
+            Theme.removeListener(themeListener);
+            return;
+        }
+        root.setBackground(Theme.BG);
+        content.setBackground(Theme.BG);
+        if (bar != null) {
+            bar.setBackground(Theme.SURFACE);
+            bar.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createMatteBorder(0, 0, 1, 0, Theme.BORDER),
+                    BorderFactory.createEmptyBorder(0, 24, 0, 24)));
+        }
+        if (side != null) {
+            side.setBackground(Theme.SURFACE);
+            side.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, Theme.BORDER));
+        }
+        if (modeBtn != null) {
+            modeBtn.setText(Theme.isDarkMode ? "Light Mode" : "Dark Mode");
+            modeBtn.repaint();
+        }
+        if (mark != null) {
+            mark.setForeground(Theme.TEXT);
+            mark.setIcon(Icons.of(Glyph.DASHBOARD, 18, Theme.TEXT));
+        }
+        if (name != null) name.setForeground(Theme.TEXT);
+        if (roleLabel != null) roleLabel.setForeground(Theme.MUTED);
+        if (topSearch != null) {
+            Ui.style(topSearch);
+            topSearch.repaint();
+        }
+        items.values().forEach(NavItem::updateLook);
+
+        try {
             content.removeAll();
             pages.clear();
             show(currentKey);
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
 
-            root.revalidate();
-            root.repaint();
-        });
-
-        show("dashboard");
+        content.revalidate();
+        root.revalidate();
+        revalidate();
+        repaint();
     }
 
     private String currentKey = "dashboard";
@@ -295,8 +308,22 @@ public class MainFrame extends JFrame {
         content.repaint();
     }
 
+    @Override
+    public void dispose() {
+        if (themeListener != null) {
+            Theme.removeListener(themeListener);
+        }
+        if (current == this) {
+            current = null;
+        }
+        super.dispose();
+    }
+
     private void logout() {
         if (Dialogs.confirm(this, "Sign out?", "You will return to the sign-in screen.", "Sign out")) {
+            if (themeListener != null) {
+                Theme.removeListener(themeListener);
+            }
             new AuthService().logout();
             current = null;
             dispose();

@@ -55,7 +55,9 @@ public final class Theme {
     }
 
     public static void addListener(Runnable r) {
-        listeners.add(r);
+        if (!listeners.contains(r)) {
+            listeners.add(r);
+        }
     }
 
     public static void removeListener(Runnable r) {
@@ -84,13 +86,15 @@ public final class Theme {
         } catch (Throwable ignored) { }
 
         for (Window w : Window.getWindows()) {
-            SwingUtilities.updateComponentTreeUI(w);
-            w.repaint();
+            if (w.isDisplayable()) {
+                SwingUtilities.updateComponentTreeUI(w);
+                w.repaint();
+            }
         }
         for (Runnable l : new ArrayList<>(listeners)) {
             try {
                 l.run();
-            } catch (Exception ignored) { }
+            } catch (Throwable ignored) { }
         }
     }
 

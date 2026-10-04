@@ -14,9 +14,13 @@ public class StatTile extends JPanel {
     private final JLabel value = Ui.label("—", Theme.sansBold(24), Theme.TEXT);
     private final boolean accent;
 
+    public StatTile(String label, String caption) {
+        this(label, caption, false);
+    }
+
     public StatTile(String label, String caption, boolean accent) {
         super(new BorderLayout(0, 4));
-        this.accent = accent;
+        this.accent = false;
         setOpaque(false);
         setBorder(BorderFactory.createEmptyBorder(14, 18, 14, 18));
         JLabel l = Ui.label(label.toUpperCase(), Theme.sansBold(11), Theme.MUTED);
@@ -36,11 +40,10 @@ public class StatTile extends JPanel {
         int w = getWidth();
         int h = getHeight();
 
-        // 14px rounded card fill & hairline border
+        // 14px rounded card fill & hairline border (uniform across all tiles)
         g2.setColor(Theme.SURFACE);
         g2.fillRoundRect(0, 0, w - 1, h - 1, 14, 14);
-        Color border = accent ? (Theme.isDarkMode ? new Color(0x3B, 0x82, 0xF6) : Theme.PLUM) : Theme.BORDER;
-        g2.setColor(border);
+        g2.setColor(Theme.BORDER);
         g2.drawRoundRect(0, 0, w - 1, h - 1, 14, 14);
 
         g2.dispose();

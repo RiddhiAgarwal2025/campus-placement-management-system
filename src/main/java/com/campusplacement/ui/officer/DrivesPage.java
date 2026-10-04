@@ -46,7 +46,7 @@ public class DrivesPage extends Page {
             .col("Drive date", Drive::driveDate, 110, Kind.DATE)
             .col("Location", Drive::location, 100)
             .col("Eligibility", DrivesPage::shortCriteria, 200);
-    private final StatTile kpiActive = new StatTile("Active Drives", "Accepting applications", true);
+    private final StatTile kpiActive = new StatTile("Active Drives", "Accepting applications", false);
     private final StatTile kpiUpcoming = new StatTile("Scheduled", "Upcoming drives", false);
     private final StatTile kpiCompleted = new StatTile("Completed", "Finished campaigns", false);
     private final StatTile kpiApps = new StatTile("Applications", "Total submissions", false);

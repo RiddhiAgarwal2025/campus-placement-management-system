@@ -37,7 +37,7 @@ public class StudentsPage extends Page {
             .col("Email", Student::email, 230)
             .col("Phone", Student::phone, 110);
     private final StatTile kpiTotal = new StatTile("Registered Students", "Active student profiles", false);
-    private final StatTile kpiEligible = new StatTile("Zero Backlogs", "Immediate drive eligibility", true);
+    private final StatTile kpiEligible = new StatTile("Zero Backlogs", "Immediate drive eligibility", false);
     private final StatTile kpiAvgCgpa = new StatTile("Average CGPA", "Batch academic standing", false);
     private final StatTile kpiDepts = new StatTile("Departments", "Academic disciplines", false);
     private final HintField search;

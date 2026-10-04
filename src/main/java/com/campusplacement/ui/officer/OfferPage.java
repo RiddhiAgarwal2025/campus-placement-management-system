@@ -43,7 +43,7 @@ public class OfferPage extends Page {
             .col("Status", Offer::status, 100, Kind.BADGE)
             .col("Responded", Offer::respondedAt, 140, Kind.DATE);
     private final StatTile kpiTotal = new StatTile("Total Offers", "Extended to candidates", false);
-    private final StatTile kpiAccepted = new StatTile("Accepted Offers", "Confirmed student placements", true);
+    private final StatTile kpiAccepted = new StatTile("Accepted Offers", "Confirmed student placements", false);
     private final StatTile kpiPending = new StatTile("Awaiting Reply", "Pending student decision", false);
     private final StatTile kpiHighest = new StatTile("Highest Package", "Top package offered", false);
     private final HintField search;

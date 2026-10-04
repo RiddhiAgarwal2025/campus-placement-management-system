@@ -41,7 +41,7 @@ public class StudentDashboardPage extends Page {
     private final StatTile apps = new StatTile("Applications", "submitted", false);
     private final StatTile shortlisted = new StatTile("Shortlisted", "in selection", false);
     private final StatTile offers = new StatTile("Offers", "received", false);
-    private final StatTile pending = new StatTile("Awaiting your reply", "pending offers", true);
+    private final StatTile pending = new StatTile("Awaiting your reply", "pending offers", false);
     private final StatTile open = new StatTile("Open drives", "accepting applications", false);
     private final JPanel todo = Ui.vstack(0);
     private final Map<Integer, String> eligibleMap = new HashMap<>();

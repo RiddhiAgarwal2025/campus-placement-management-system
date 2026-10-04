@@ -29,7 +29,7 @@ public class EligibilityPage extends Page {
     private final JComboBox<Drive> drive = Ui.combo(List.of());
     private final JComboBox<String> show = Ui.combo(List.of("All students", "Eligible only", "Not eligible only"));
     private final JLabel criteria = Ui.body("Select a drive to see its criteria.");
-    private final StatTile eligible = new StatTile("Eligible", "meet every criterion", true);
+    private final StatTile eligible = new StatTile("Eligible", "meet every criterion", false);
     private final StatTile notEligible = new StatTile("Not eligible", "fail at least one criterion", false);
     private final StatTile applied = new StatTile("Applications", "already submitted", false);
     private List<EligibilityResult> results = List.of();

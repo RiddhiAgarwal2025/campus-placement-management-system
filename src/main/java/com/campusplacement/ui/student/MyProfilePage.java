@@ -30,7 +30,7 @@ import javax.swing.JTextField;
 public class MyProfilePage extends Page {
     private final StudentService students = new StudentService();
     private final SkillService skills = new SkillService();
-    private final StatTile kpiCgpa = new StatTile("CGPA", "Academic Standing", true);
+    private final StatTile kpiCgpa = new StatTile("CGPA", "Academic Standing", false);
     private final StatTile kpiBacklogs = new StatTile("Backlogs", "Active course arrears", false);
     private final StatTile kpiGradYear = new StatTile("Graduation Year", "Graduating class", false);
     private final StatTile kpiDept = new StatTile("Department", "Engineering major", false);

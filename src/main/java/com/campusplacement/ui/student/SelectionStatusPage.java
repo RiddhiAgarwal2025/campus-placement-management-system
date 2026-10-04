@@ -24,7 +24,7 @@ public class SelectionStatusPage extends Page {
             .col("Round status", StudentRoundStatus::roundStatus, 120, Kind.BADGE)
             .col("Your result", r -> r.result() == null ? "AWAITING" : r.result(), 110, Kind.BADGE);
     private final StatTile kpiTotalRounds = new StatTile("Selection Rounds", "Scheduled stages", false);
-    private final StatTile kpiPassed = new StatTile("Cleared Rounds", "Successfully passed", true);
+    private final StatTile kpiPassed = new StatTile("Cleared Rounds", "Successfully passed", false);
     private final StatTile kpiAwaiting = new StatTile("Pending Results", "Under evaluation", false);
 
     public SelectionStatusPage() {
