@@ -10,11 +10,14 @@ import com.campusplacement.ui.components.FilterBar;
 import com.campusplacement.ui.components.FormDialog;
 import com.campusplacement.ui.components.HintField;
 import com.campusplacement.ui.components.Icons.Glyph;
+import com.campusplacement.ui.components.KpiBanner;
 import com.campusplacement.ui.components.Page;
+import com.campusplacement.ui.components.StatTile;
 import com.campusplacement.ui.components.Ui;
 import com.campusplacement.util.Formats;
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
@@ -39,6 +42,10 @@ public class OfferPage extends Page {
             .col("Joining date", Offer::joiningDate, 100, Kind.DATE)
             .col("Status", Offer::status, 100, Kind.BADGE)
             .col("Responded", Offer::respondedAt, 140, Kind.DATE);
+    private final StatTile kpiTotal = new StatTile("Total Offers", "Extended to candidates", false);
+    private final StatTile kpiAccepted = new StatTile("Accepted Offers", "Confirmed student placements", true);
+    private final StatTile kpiPending = new StatTile("Awaiting Reply", "Pending student decision", false);
+    private final StatTile kpiHighest = new StatTile("Highest Package", "Top package offered", false);
     private final HintField search;
     private final JComboBox<String> status;
 
@@ -64,14 +71,26 @@ public class OfferPage extends Page {
                 refresh();
             }
         });
+
+        KpiBanner kpiBanner = new KpiBanner(kpiTotal, kpiAccepted, kpiPending, kpiHighest);
+
+        JPanel cardContent = new JPanel(new BorderLayout(0, 12));
+        cardContent.setOpaque(false);
+
         JPanel top = new JPanel(new BorderLayout());
         top.setOpaque(false);
         top.add(bar, BorderLayout.WEST);
         top.add(Ui.rightRow(edit, withdraw), BorderLayout.EAST);
-        JPanel body = new JPanel(new BorderLayout(0, 12));
+
+        cardContent.add(top, BorderLayout.NORTH);
+        cardContent.add(table, BorderLayout.CENTER);
+
+        JPanel tableCard = Ui.card(cardContent, 18);
+
+        JPanel body = new JPanel(new BorderLayout(0, 14));
         body.setOpaque(false);
-        body.add(top, BorderLayout.NORTH);
-        body.add(table, BorderLayout.CENTER);
+        body.add(kpiBanner, BorderLayout.NORTH);
+        body.add(tableCard, BorderLayout.CENTER);
         setBody(body);
     }
 
@@ -135,7 +154,18 @@ public class OfferPage extends Page {
         List<Offer> rows = load(() -> service.list(search.getText(), (String) status.getSelectedItem()), List.of());
         table.setRows(rows);
         Map<String, Long> c = rows.stream().collect(Collectors.groupingBy(Offer::status, Collectors.counting()));
-        setSubtitle(rows.size() + " offer(s)   |   Pending " + c.getOrDefault("PENDING", 0L) + "   Accepted "
-                + c.getOrDefault("ACCEPTED", 0L) + "   Rejected " + c.getOrDefault("REJECTED", 0L));
+
+        BigDecimal maxPkg = rows.stream()
+                .map(Offer::packageLpa)
+                .filter(p -> p != null)
+                .max(BigDecimal::compareTo)
+                .orElse(BigDecimal.ZERO);
+
+        kpiTotal.setValue(rows.size());
+        kpiAccepted.setValue(c.getOrDefault("ACCEPTED", 0L));
+        kpiPending.setValue(c.getOrDefault("PENDING", 0L));
+        kpiHighest.setValue(maxPkg.compareTo(BigDecimal.ZERO) > 0 ? Formats.lpa(maxPkg) : "—");
+
+        setSubtitle(rows.size() + " offer(s) issued. Process candidate responses and verify compensation terms.");
     }
 }

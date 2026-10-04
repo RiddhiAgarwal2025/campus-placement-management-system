@@ -72,11 +72,18 @@ public class EligibilityPage extends Page {
         JPanel filterRow = new JPanel(new BorderLayout());
         filterRow.setOpaque(false);
         filterRow.add(Ui.row(Ui.fieldLabel("Show"), show), BorderLayout.WEST);
-        north.add(filterRow, BorderLayout.SOUTH);
+
+        JPanel tableCardContent = new JPanel(new BorderLayout(0, 12));
+        tableCardContent.setOpaque(false);
+        tableCardContent.add(filterRow, BorderLayout.NORTH);
+        tableCardContent.add(table, BorderLayout.CENTER);
+
+        JPanel tableCard = Ui.card(tableCardContent, 18);
+
         JPanel body = new JPanel(new BorderLayout(0, 14));
         body.setOpaque(false);
         body.add(north, BorderLayout.NORTH);
-        body.add(table, BorderLayout.CENTER);
+        body.add(tableCard, BorderLayout.CENTER);
         setBody(body);
     }
 

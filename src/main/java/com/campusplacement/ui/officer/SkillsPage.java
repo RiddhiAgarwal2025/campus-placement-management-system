@@ -10,9 +10,12 @@ import com.campusplacement.ui.components.FilterBar;
 import com.campusplacement.ui.components.FormDialog;
 import com.campusplacement.ui.components.HintField;
 import com.campusplacement.ui.components.Icons.Glyph;
+import com.campusplacement.ui.components.KpiBanner;
 import com.campusplacement.ui.components.Page;
+import com.campusplacement.ui.components.StatTile;
 import com.campusplacement.ui.components.Ui;
 import java.awt.BorderLayout;
+import java.util.Comparator;
 import java.util.List;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
@@ -23,6 +26,9 @@ public class SkillsPage extends Page {
             .col("Skill", Skill::name, 260)
             .col("Category", Skill::category, 200)
             .col("Students with skill", Skill::studentCount, 140, Kind.NUMBER);
+    private final StatTile kpiTotalSkills = new StatTile("Skills Catalogue", "Registered competencies", false);
+    private final StatTile kpiCategories = new StatTile("Skill Categories", "Functional domains", false);
+    private final StatTile kpiTopSkill = new StatTile("Most Endorsed", "Highest student count", true);
     private final HintField search;
 
     public SkillsPage() {
@@ -48,15 +54,27 @@ public class SkillsPage extends Page {
                 refresh();
             }
         });
+
+        KpiBanner kpiBanner = new KpiBanner(kpiTotalSkills, kpiCategories, kpiTopSkill);
+
+        JPanel cardContent = new JPanel(new BorderLayout(0, 12));
+        cardContent.setOpaque(false);
+
         JPanel top = new JPanel(new BorderLayout());
         top.setOpaque(false);
         top.add(bar, BorderLayout.WEST);
         top.add(Ui.rightRow(edit, del), BorderLayout.EAST);
         table.onDoubleClick(this::edit);
-        JPanel body = new JPanel(new BorderLayout(0, 12));
+
+        cardContent.add(top, BorderLayout.NORTH);
+        cardContent.add(table, BorderLayout.CENTER);
+
+        JPanel tableCard = Ui.card(cardContent, 18);
+
+        JPanel body = new JPanel(new BorderLayout(0, 14));
         body.setOpaque(false);
-        body.add(top, BorderLayout.NORTH);
-        body.add(table, BorderLayout.CENTER);
+        body.add(kpiBanner, BorderLayout.NORTH);
+        body.add(tableCard, BorderLayout.CENTER);
         setBody(body);
     }
 
@@ -78,6 +96,15 @@ public class SkillsPage extends Page {
 
     @Override
     public void refresh() {
-        table.setRows(load(() -> service.list(search.getText()), List.of()));
+        List<Skill> list = load(() -> service.list(search.getText()), List.of());
+        table.setRows(list);
+
+        int count = list.size();
+        long cats = list.stream().map(Skill::category).filter(c -> c != null && !c.isBlank()).distinct().count();
+        Skill top = list.stream().max(Comparator.comparingInt(Skill::studentCount)).orElse(null);
+
+        kpiTotalSkills.setValue(count);
+        kpiCategories.setValue(cats);
+        kpiTopSkill.setValue(top != null ? top.name() + " (" + top.studentCount() + ")" : "—");
     }
 }

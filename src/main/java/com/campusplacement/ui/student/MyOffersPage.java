@@ -5,13 +5,20 @@ import com.campusplacement.service.OfferService;
 import com.campusplacement.ui.components.Badge;
 import com.campusplacement.ui.components.Btn;
 import com.campusplacement.ui.components.Icons.Glyph;
+import com.campusplacement.ui.components.KpiBanner;
 import com.campusplacement.ui.components.Page;
+import com.campusplacement.ui.components.StatTile;
 import com.campusplacement.ui.components.Theme;
 import com.campusplacement.ui.components.Ui;
 import com.campusplacement.util.Formats;
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.GridLayout;
+import java.awt.RenderingHints;
+import java.math.BigDecimal;
 import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -20,37 +27,57 @@ import javax.swing.JPanel;
 public class MyOffersPage extends Page {
     private final OfferService service = new OfferService();
     private final JPanel list = Ui.vstack(0);
+    private final StatTile kpiTotal = new StatTile("Total Offers", "Extended to you", false);
+    private final StatTile kpiAccepted = new StatTile("Accepted", "Confirmed placement", true);
+    private final StatTile kpiMaxPkg = new StatTile("Top Package", "Highest offering", false);
 
     public MyOffersPage() {
         super("My Offers", "Review your offers. Accepting or rejecting is final, and only one offer can be accepted.");
-        JPanel wrap = new JPanel(new BorderLayout());
+        KpiBanner kpiBanner = new KpiBanner(kpiTotal, kpiAccepted, kpiMaxPkg);
+
+        JPanel wrap = new JPanel(new BorderLayout(0, 14));
         wrap.setOpaque(false);
-        wrap.add(list, BorderLayout.NORTH);
+        wrap.add(kpiBanner, BorderLayout.NORTH);
+        wrap.add(list, BorderLayout.CENTER);
         setBody(Ui.scroll(wrap));
     }
 
     private JPanel card(Offer o) {
-        JPanel c = new JPanel(new BorderLayout(24, 0));
-        c.setBackground(Theme.SURFACE);
         boolean pending = "PENDING".equals(o.status());
-        c.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(0, 3, 0, 0, pending ? Theme.PLUM : Theme.BORDER),
-                        BorderFactory.createMatteBorder(1, 0, 1, 1, Theme.BORDER)),
-                BorderFactory.createEmptyBorder(18, 20, 18, 20)));
+        JPanel c = new JPanel(new BorderLayout(24, 0)) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                int w = getWidth();
+                int h = getHeight();
+                g2.setColor(Theme.SURFACE);
+                g2.fillRoundRect(0, 0, w - 1, h - 1, 14, 14);
+                g2.setColor(pending ? (Theme.isDarkMode ? new Color(0x3B, 0x82, 0xF6) : Theme.PLUM) : Theme.BORDER);
+                g2.drawRoundRect(0, 0, w - 1, h - 1, 14, 14);
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        c.setOpaque(false);
+        c.setBorder(BorderFactory.createEmptyBorder(18, 22, 18, 22));
         c.setAlignmentX(LEFT_ALIGNMENT);
         c.setMaximumSize(new Dimension(Integer.MAX_VALUE, 170));
+
         JPanel left = Ui.vstack(0);
-        left.add(Ui.label(o.companyName(), Theme.serif(22), Theme.TEXT));
+        left.add(Ui.label(o.companyName(), Theme.sansBold(18), Theme.TEXT));
         left.add(Ui.body(o.position() + ", " + o.location()));
         left.add(Box.createVerticalStrut(10));
         left.add(Badge.on(o.status(), Theme.SURFACE));
         c.add(left, BorderLayout.WEST);
+
         JPanel facts = new JPanel(new GridLayout(1, 3, 18, 0));
         facts.setOpaque(false);
         facts.add(fact("Package", Formats.lpa(o.packageLpa())));
         facts.add(fact("Offer date", Formats.date(o.offerDate())));
         facts.add(fact("Joining date", Formats.date(o.joiningDate())));
         c.add(facts, BorderLayout.CENTER);
+
         if (pending) {
             Btn accept = new Btn("Accept offer", Btn.Variant.PRIMARY, Glyph.CHECK);
             accept.addActionListener(e -> respond(o, true));
@@ -72,7 +99,7 @@ public class MyOffersPage extends Page {
     private JPanel fact(String label, String value) {
         JPanel p = Ui.vstack(0);
         p.add(Ui.muted(label));
-        p.add(Ui.label(value, Theme.serif(18), Theme.TEXT));
+        p.add(Ui.label(value, Theme.sansBold(16), Theme.TEXT));
         return p;
     }
 
@@ -106,6 +133,14 @@ public class MyOffersPage extends Page {
             list.add(card(o));
             list.add(Box.createVerticalStrut(12));
         }
+
+        long accepted = offers.stream().filter(o -> "ACCEPTED".equals(o.status())).count();
+        BigDecimal maxPkg = offers.stream().map(Offer::packageLpa).filter(p -> p != null).max(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
+
+        kpiTotal.setValue(offers.size());
+        kpiAccepted.setValue(accepted);
+        kpiMaxPkg.setValue(maxPkg.compareTo(BigDecimal.ZERO) > 0 ? Formats.lpa(maxPkg) : "—");
+
         list.revalidate();
         list.repaint();
     }

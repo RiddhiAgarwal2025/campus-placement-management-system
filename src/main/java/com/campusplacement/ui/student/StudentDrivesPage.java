@@ -16,7 +16,9 @@ import com.campusplacement.ui.components.DataTable.Kind;
 import com.campusplacement.ui.components.FilterBar;
 import com.campusplacement.ui.components.HintField;
 import com.campusplacement.ui.components.Icons.Glyph;
+import com.campusplacement.ui.components.KpiBanner;
 import com.campusplacement.ui.components.Page;
+import com.campusplacement.ui.components.StatTile;
 import com.campusplacement.ui.components.Theme;
 import com.campusplacement.ui.components.Ui;
 import com.campusplacement.util.Formats;
@@ -48,6 +50,9 @@ public class StudentDrivesPage extends Page {
                     ? (results.get(d.driveId()).eligible() ? "ELIGIBLE" : "NOT ELIGIBLE") : "", 115, Kind.BADGE)
             .col("Your application", d -> applied.getOrDefault(d.driveId(), ""), 130, Kind.BADGE)
             .col("Location", Drive::location, 100);
+    private final StatTile kpiTotalDrives = new StatTile("Available Drives", "Active hiring campaigns", false);
+    private final StatTile kpiEligible = new StatTile("Eligible for You", "Criteria fully matched", true);
+    private final StatTile kpiOpen = new StatTile("Open for Application", "Accepting submissions", false);
     private final HintField search;
     private final JComboBox<String> show;
     private final JPanel detail = Ui.vstack(0);
@@ -63,13 +68,24 @@ public class StudentDrivesPage extends Page {
         detail.setBorder(BorderFactory.createEmptyBorder(18, 18, 18, 18));
         JPanel card = Ui.card(Ui.scroll(detail), 0);
         card.setPreferredSize(new Dimension(340, 200));
+
+        KpiBanner kpiBanner = new KpiBanner(kpiTotalDrives, kpiEligible, kpiOpen);
+
+        JPanel tableCardContent = new JPanel(new BorderLayout(0, 12));
+        tableCardContent.setOpaque(false);
+        tableCardContent.add(bar, BorderLayout.NORTH);
+        tableCardContent.add(table, BorderLayout.CENTER);
+
+        JPanel tableCard = Ui.card(tableCardContent, 18);
+
         JPanel center = new JPanel(new BorderLayout(16, 0));
         center.setOpaque(false);
-        center.add(table, BorderLayout.CENTER);
+        center.add(tableCard, BorderLayout.CENTER);
         center.add(card, BorderLayout.EAST);
-        JPanel body = new JPanel(new BorderLayout(0, 12));
+
+        JPanel body = new JPanel(new BorderLayout(0, 14));
         body.setOpaque(false);
-        body.add(bar, BorderLayout.NORTH);
+        body.add(kpiBanner, BorderLayout.NORTH);
         body.add(center, BorderLayout.CENTER);
         setBody(body);
         showDetail(null);
@@ -83,7 +99,7 @@ public class StudentDrivesPage extends Page {
                     + "appear here.</div></html>"));
         } else {
             detail.add(left(Ui.label("<html><div style='width:300px'>" + Ui.escape(d.companyName()) + "</div></html>",
-                    Theme.serif(22), Theme.TEXT)));
+                    Theme.sansBold(20), Theme.TEXT)));
             detail.add(left(Ui.body(d.position())));
             detail.add(Box.createVerticalStrut(10));
             detail.add(left(Badge.on(d.status(), Theme.SURFACE)));
@@ -183,6 +199,14 @@ public class StudentDrivesPage extends Page {
                 || mode == 2 && d.acceptingApplications()).toList();
         Drive keep = table.selected();
         table.setRows(rows);
+
+        long eligibleCount = all.stream().filter(d -> results.containsKey(d.driveId()) && results.get(d.driveId()).eligible()).count();
+        long openCount = all.stream().filter(Drive::acceptingApplications).count();
+
+        kpiTotalDrives.setValue(all.size());
+        kpiEligible.setValue(eligibleCount);
+        kpiOpen.setValue(openCount);
+
         int idx = keep == null ? 0 : rows.stream().map(Drive::driveId).toList().indexOf(keep.driveId());
         if (!rows.isEmpty()) {
             int v = table.table().convertRowIndexToView(Math.max(idx, 0));

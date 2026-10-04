@@ -12,7 +12,9 @@ import com.campusplacement.ui.components.DataTable;
 import com.campusplacement.ui.components.DataTable.Kind;
 import com.campusplacement.ui.components.FormDialog;
 import com.campusplacement.ui.components.Icons.Glyph;
+import com.campusplacement.ui.components.KpiBanner;
 import com.campusplacement.ui.components.Page;
+import com.campusplacement.ui.components.StatTile;
 import com.campusplacement.ui.components.Theme;
 import com.campusplacement.ui.components.Ui;
 import java.awt.BorderLayout;
@@ -20,6 +22,7 @@ import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.util.List;
 import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
@@ -27,7 +30,10 @@ import javax.swing.JTextField;
 public class MyProfilePage extends Page {
     private final StudentService students = new StudentService();
     private final SkillService skills = new SkillService();
-    private final JPanel facts = new JPanel(new GridLayout(1, 0, 12, 0));
+    private final StatTile kpiCgpa = new StatTile("CGPA", "Academic Standing", true);
+    private final StatTile kpiBacklogs = new StatTile("Backlogs", "Active course arrears", false);
+    private final StatTile kpiGradYear = new StatTile("Graduation Year", "Graduating class", false);
+    private final StatTile kpiDept = new StatTile("Department", "Engineering major", false);
     private final JPanel info = Ui.vstack(0);
     private final DataTable<AcademicRecord> records = new DataTable<AcademicRecord>("No academic records",
             "Records are maintained by the placement office.")
@@ -49,32 +55,24 @@ public class MyProfilePage extends Page {
         pwd.addActionListener(e -> changePassword());
         addAction(contact);
         addAction(pwd);
-        facts.setOpaque(false);
-        facts.setPreferredSize(new Dimension(100, 84));
+
+        KpiBanner kpiBanner = new KpiBanner(kpiCgpa, kpiBacklogs, kpiGradYear, kpiDept);
+
         JPanel top = new JPanel(new BorderLayout(0, 14));
         top.setOpaque(false);
-        top.add(facts, BorderLayout.NORTH);
+        top.add(kpiBanner, BorderLayout.NORTH);
         top.add(Ui.card(info, 18), BorderLayout.CENTER);
+
         JPanel tables = new JPanel(new GridLayout(1, 2, 16, 0));
         tables.setOpaque(false);
         tables.add(Ui.section("Academic records", "Semester-wise results", records));
         tables.add(Ui.section("Skills", "Used to match drive requirements", skillTable));
+
         JPanel body = new JPanel(new BorderLayout(0, 16));
         body.setOpaque(false);
         body.add(top, BorderLayout.NORTH);
         body.add(tables, BorderLayout.CENTER);
         setBody(body);
-    }
-
-    private JPanel fact(String label, String value) {
-        JPanel p = Ui.vstack(0);
-        p.setOpaque(true);
-        p.setBackground(Theme.SURFACE);
-        p.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Theme.BORDER),
-                BorderFactory.createEmptyBorder(10, 14, 10, 14)));
-        p.add(Ui.muted(label));
-        p.add(Ui.label(value, Theme.serif(24), Theme.TEXT));
-        return p;
     }
 
     private void editContact() {
@@ -109,20 +107,20 @@ public class MyProfilePage extends Page {
         if (me == null) {
             return;
         }
-        facts.removeAll();
-        facts.add(fact("CGPA", me.cgpa().toPlainString()));
-        facts.add(fact("Backlogs", String.valueOf(me.backlogs())));
-        facts.add(fact("Graduation year", String.valueOf(me.graduationYear())));
-        facts.add(fact("Department", me.deptCode()));
+        kpiCgpa.setValue(me.cgpa().toPlainString());
+        kpiBacklogs.setValue(me.backlogs());
+        kpiGradYear.setValue(me.graduationYear());
+        kpiDept.setValue(me.deptCode());
+
         info.removeAll();
-        info.add(Ui.label(me.fullName(), Theme.serif(22), Theme.TEXT));
+        info.add(Ui.label(me.fullName(), Theme.sansBold(20), Theme.TEXT));
+        info.add(Box.createVerticalStrut(6));
         info.add(Ui.kv("Student ID", me.studentId()));
         info.add(Ui.kv("Department", me.deptName()));
         info.add(Ui.kv("Email", me.email()));
         info.add(Ui.kv("Phone", me.phone()));
         records.setRows(load(() -> students.records(id), List.of()));
         skillTable.setRows(load(() -> skills.studentSkills(id), List.of()));
-        facts.revalidate();
         info.revalidate();
         repaint();
     }

@@ -13,7 +13,9 @@ import com.campusplacement.ui.components.DataTable.Kind;
 import com.campusplacement.ui.components.FormDialog;
 import com.campusplacement.ui.components.HintField;
 import com.campusplacement.ui.components.Icons.Glyph;
+import com.campusplacement.ui.components.KpiBanner;
 import com.campusplacement.ui.components.Page;
+import com.campusplacement.ui.components.StatTile;
 import com.campusplacement.ui.components.Theme;
 import com.campusplacement.ui.components.Ui;
 import com.campusplacement.util.Formats;
@@ -49,6 +51,10 @@ public class SelectionPage extends Page {
             .col("Remarks", RoundCandidate::remarks, 160)
             .col("Application", RoundCandidate::applicationStatus, 110, Kind.BADGE)
             .multiSelect();
+    private final StatTile kpiTotalRounds = new StatTile("Assessment Rounds", "Configured stages", false);
+    private final StatTile kpiCandidates = new StatTile("Candidates", "Evaluating in round", false);
+    private final StatTile kpiPassed = new StatTile("Qualified", "Promoted to next stage", true);
+    private final StatTile kpiPending = new StatTile("Awaiting Decision", "To be recorded", false);
     private List<SelectionRound> rounds = List.of();
     private SelectionRound current;
     private boolean loading;
@@ -110,13 +116,25 @@ public class SelectionPage extends Page {
         right.add(rtop, BorderLayout.NORTH);
         right.add(candidates, BorderLayout.CENTER);
 
+        KpiBanner kpiBanner = new KpiBanner(kpiTotalRounds, kpiCandidates, kpiPassed, kpiPending);
+
         JPanel center = new JPanel(new BorderLayout(20, 0));
         center.setOpaque(false);
-        center.add(left, BorderLayout.WEST);
+        center.add(Ui.card(left, 18), BorderLayout.WEST);
         center.add(Ui.card(right, 18), BorderLayout.CENTER);
+
         JPanel body = new JPanel(new BorderLayout(0, 14));
         body.setOpaque(false);
-        body.add(Ui.row(Ui.fieldLabel("Drive"), drive), BorderLayout.NORTH);
+
+        JPanel driveRow = Ui.row(Ui.fieldLabel("Placement Drive"), drive);
+        driveRow.setBorder(BorderFactory.createEmptyBorder(0, 0, 4, 0));
+
+        JPanel northPanel = new JPanel(new BorderLayout(0, 12));
+        northPanel.setOpaque(false);
+        northPanel.add(driveRow, BorderLayout.NORTH);
+        northPanel.add(kpiBanner, BorderLayout.SOUTH);
+
+        body.add(northPanel, BorderLayout.NORTH);
         body.add(center, BorderLayout.CENTER);
         setBody(body);
     }
@@ -210,13 +228,26 @@ public class SelectionPage extends Page {
             roundTitle.setText("No round selected");
             roundHint.setText(" ");
             candidates.setRows(List.of());
+            kpiTotalRounds.setValue(rounds.size());
+            kpiCandidates.setValue(0);
+            kpiPassed.setValue(0);
+            kpiPending.setValue(0);
             return;
         }
         SelectionRound prev = service.previousRound(rounds, current);
         roundTitle.setText("Round " + current.sequenceNo() + ": " + current.name());
         roundHint.setText(prev == null ? "First round: every applicant can receive a result."
                 : "Only candidates who passed " + prev.name() + " can receive a result. Others show AWAITING or FAIL.");
-        candidates.setRows(load(() -> service.candidates(current), List.of()));
+        List<RoundCandidate> list = load(() -> service.candidates(current), List.of());
+        candidates.setRows(list);
+
+        long passed = list.stream().filter(c -> "PASS".equals(c.currentResult())).count();
+        long failed = list.stream().filter(c -> "FAIL".equals(c.currentResult())).count();
+
+        kpiTotalRounds.setValue(rounds.size());
+        kpiCandidates.setValue(list.size());
+        kpiPassed.setValue(passed);
+        kpiPending.setValue(Math.max(0, list.size() - passed - failed));
     }
 
     @Override

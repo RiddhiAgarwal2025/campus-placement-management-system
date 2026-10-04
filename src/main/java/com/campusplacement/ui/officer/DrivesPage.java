@@ -15,7 +15,9 @@ import com.campusplacement.ui.components.DataTable.Kind;
 import com.campusplacement.ui.components.FilterBar;
 import com.campusplacement.ui.components.HintField;
 import com.campusplacement.ui.components.Icons.Glyph;
+import com.campusplacement.ui.components.KpiBanner;
 import com.campusplacement.ui.components.Page;
+import com.campusplacement.ui.components.StatTile;
 import com.campusplacement.ui.components.Theme;
 import com.campusplacement.ui.components.Ui;
 import com.campusplacement.util.Formats;
@@ -44,6 +46,10 @@ public class DrivesPage extends Page {
             .col("Drive date", Drive::driveDate, 110, Kind.DATE)
             .col("Location", Drive::location, 100)
             .col("Eligibility", DrivesPage::shortCriteria, 200);
+    private final StatTile kpiActive = new StatTile("Active Drives", "Accepting applications", true);
+    private final StatTile kpiUpcoming = new StatTile("Scheduled", "Upcoming drives", false);
+    private final StatTile kpiCompleted = new StatTile("Completed", "Finished campaigns", false);
+    private final StatTile kpiApps = new StatTile("Applications", "Total submissions", false);
     private final HintField search;
     private final JComboBox<String> status;
     private final JComboBox<Company> company;
@@ -63,6 +69,8 @@ public class DrivesPage extends Page {
         table.onSelect(this::showDetail);
         table.onDoubleClick(d -> new DriveDetailDialog(this, d).setVisible(true));
 
+        KpiBanner kpiBanner = new KpiBanner(kpiActive, kpiUpcoming, kpiCompleted, kpiApps);
+
         JPanel detailCard = Ui.card(Ui.scroll(detail), 0);
         detail.setBorder(BorderFactory.createEmptyBorder(18, 18, 18, 18));
         detail.setOpaque(true);
@@ -70,13 +78,21 @@ public class DrivesPage extends Page {
         detailCard.setPreferredSize(new Dimension(330, 200));
         showDetail(null);
 
+        JPanel tableCardContent = new JPanel(new BorderLayout(0, 12));
+        tableCardContent.setOpaque(false);
+        tableCardContent.add(bar, BorderLayout.NORTH);
+        tableCardContent.add(table, BorderLayout.CENTER);
+
+        JPanel tableCard = Ui.card(tableCardContent, 18);
+
         JPanel center = new JPanel(new BorderLayout(16, 0));
         center.setOpaque(false);
-        center.add(table, BorderLayout.CENTER);
+        center.add(tableCard, BorderLayout.CENTER);
         center.add(detailCard, BorderLayout.EAST);
-        JPanel body = new JPanel(new BorderLayout(0, 12));
+
+        JPanel body = new JPanel(new BorderLayout(0, 14));
         body.setOpaque(false);
-        body.add(bar, BorderLayout.NORTH);
+        body.add(kpiBanner, BorderLayout.NORTH);
         body.add(center, BorderLayout.CENTER);
         setBody(body);
     }
@@ -207,6 +223,17 @@ public class DrivesPage extends Page {
         List<Drive> rows = load(() -> service.list(search.getText(), (String) status.getSelectedItem(),
                 c == null ? null : c.companyId()), List.of());
         table.setRows(rows);
+
+        long active = rows.stream().filter(d -> "OPEN".equals(d.status())).count();
+        long upcoming = rows.stream().filter(d -> "UPCOMING".equals(d.status())).count();
+        long completed = rows.stream().filter(d -> "COMPLETED".equals(d.status())).count();
+        long apps = rows.stream().mapToInt(Drive::applicationCount).sum();
+
+        kpiActive.setValue(active);
+        kpiUpcoming.setValue(upcoming);
+        kpiCompleted.setValue(completed);
+        kpiApps.setValue(apps);
+
         if (keep != null && table.selected() == null) {
             rows.stream().filter(d -> d.driveId() == keep.driveId()).findFirst().ifPresent(d -> {
                 int idx = rows.indexOf(d);

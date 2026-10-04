@@ -8,7 +8,9 @@ import com.campusplacement.ui.components.DataTable;
 import com.campusplacement.ui.components.DataTable.Kind;
 import com.campusplacement.ui.components.Dialogs;
 import com.campusplacement.ui.components.Icons.Glyph;
+import com.campusplacement.ui.components.KpiBanner;
 import com.campusplacement.ui.components.Page;
+import com.campusplacement.ui.components.StatTile;
 import com.campusplacement.ui.components.Theme;
 import com.campusplacement.ui.components.Ui;
 import com.campusplacement.util.CsvExporter;
@@ -35,6 +37,9 @@ public class ReportsPage extends Page {
     private final JLabel desc = Ui.muted(" ");
     private final JLabel count = Ui.muted(" ");
     private final DataTable<Object[]> table = new DataTable<>("No rows", "This report returned no rows.");
+    private final StatTile kpiTotalReports = new StatTile("Analytics Reports", "Configured SQL analyses", false);
+    private final StatTile kpiSelectedReport = new StatTile("Active Query", "Live analytical view", true);
+    private final StatTile kpiRowCount = new StatTile("Records Returned", "Data points generated", false);
 
     public ReportsPage() {
         super("Reports", "Placement analytics computed by SQL queries and views at the moment you open them.");
@@ -79,10 +84,20 @@ public class ReportsPage extends Page {
         right.setOpaque(false);
         right.add(head, BorderLayout.NORTH);
         right.add(table, BorderLayout.CENTER);
-        JPanel body = new JPanel(new BorderLayout(18, 0));
+
+        JPanel rightCard = Ui.card(right, 18);
+
+        KpiBanner kpiBanner = new KpiBanner(kpiTotalReports, kpiSelectedReport, kpiRowCount);
+
+        JPanel center = new JPanel(new BorderLayout(18, 0));
+        center.setOpaque(false);
+        center.add(left, BorderLayout.WEST);
+        center.add(rightCard, BorderLayout.CENTER);
+
+        JPanel body = new JPanel(new BorderLayout(0, 14));
         body.setOpaque(false);
-        body.add(left, BorderLayout.WEST);
-        body.add(right, BorderLayout.CENTER);
+        body.add(kpiBanner, BorderLayout.NORTH);
+        body.add(center, BorderLayout.CENTER);
         setBody(body);
     }
 
@@ -109,6 +124,9 @@ public class ReportsPage extends Page {
         }
         table.setRows(data.rows());
         count.setText(data.rows().size() + " row(s)");
+        kpiTotalReports.setValue(list.getModel().getSize());
+        kpiSelectedReport.setValue(r.title());
+        kpiRowCount.setValue(data.rows().size());
     }
 
     /** Writes any table model to a CSV file chosen by the user. */
@@ -139,6 +157,7 @@ public class ReportsPage extends Page {
         if (list.getModel().getSize() == 0) {
             List<ReportDefinition> reports = load(service::reports, List.of());
             list.setListData(reports.toArray(new ReportDefinition[0]));
+            kpiTotalReports.setValue(reports.size());
             if (!reports.isEmpty()) {
                 list.setSelectedIndex(0);
             }

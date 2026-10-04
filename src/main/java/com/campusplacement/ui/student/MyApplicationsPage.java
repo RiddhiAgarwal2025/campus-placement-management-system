@@ -7,7 +7,9 @@ import com.campusplacement.ui.components.Btn;
 import com.campusplacement.ui.components.DataTable;
 import com.campusplacement.ui.components.DataTable.Kind;
 import com.campusplacement.ui.components.Icons.Glyph;
+import com.campusplacement.ui.components.KpiBanner;
 import com.campusplacement.ui.components.Page;
+import com.campusplacement.ui.components.StatTile;
 import com.campusplacement.ui.components.Ui;
 import java.awt.BorderLayout;
 import java.util.List;
@@ -26,6 +28,9 @@ public class MyApplicationsPage extends Page {
             .col("Applied on", Application::appliedAt, 140, Kind.DATE)
             .col("Drive", Application::driveStatus, 100, Kind.BADGE)
             .col("Application status", Application::status, 130, Kind.BADGE);
+    private final StatTile kpiTotal = new StatTile("Total Submitted", "Applications on file", false);
+    private final StatTile kpiShortlisted = new StatTile("Shortlisted", "Invited to rounds", false);
+    private final StatTile kpiSelected = new StatTile("Final Selections", "Passed all rounds", true);
 
     public MyApplicationsPage() {
         super("My Applications", "Applications you have submitted and where each one stands.");
@@ -40,15 +45,27 @@ public class MyApplicationsPage extends Page {
                 refresh();
             }
         });
+
+        KpiBanner kpiBanner = new KpiBanner(kpiTotal, kpiShortlisted, kpiSelected);
+
+        JPanel cardContent = new JPanel(new BorderLayout(0, 12));
+        cardContent.setOpaque(false);
+
         JPanel top = new JPanel(new BorderLayout());
         top.setOpaque(false);
         top.add(Ui.muted("APPLIED: under review.  SHORTLISTED: cleared at least one round.  SELECTED: cleared all rounds."),
                 BorderLayout.WEST);
         top.add(Ui.rightRow(rounds, withdraw), BorderLayout.EAST);
-        JPanel body = new JPanel(new BorderLayout(0, 12));
+
+        cardContent.add(top, BorderLayout.NORTH);
+        cardContent.add(table, BorderLayout.CENTER);
+
+        JPanel tableCard = Ui.card(cardContent, 18);
+
+        JPanel body = new JPanel(new BorderLayout(0, 14));
         body.setOpaque(false);
-        body.add(top, BorderLayout.NORTH);
-        body.add(table, BorderLayout.CENTER);
+        body.add(kpiBanner, BorderLayout.NORTH);
+        body.add(tableCard, BorderLayout.CENTER);
         setBody(body);
     }
 
@@ -57,7 +74,11 @@ public class MyApplicationsPage extends Page {
         List<Application> rows = load(service::mine, List.of());
         table.setRows(rows);
         Map<String, Long> c = rows.stream().collect(Collectors.groupingBy(Application::status, Collectors.counting()));
-        setSubtitle(rows.size() + " application(s)   |   Shortlisted " + c.getOrDefault("SHORTLISTED", 0L)
-                + "   Selected " + c.getOrDefault("SELECTED", 0L) + "   Rejected " + c.getOrDefault("REJECTED", 0L));
+
+        kpiTotal.setValue(rows.size());
+        kpiShortlisted.setValue(c.getOrDefault("SHORTLISTED", 0L));
+        kpiSelected.setValue(c.getOrDefault("SELECTED", 0L));
+
+        setSubtitle(rows.size() + " application(s) submitted. Monitor your evaluation progress across selection rounds.");
     }
 }

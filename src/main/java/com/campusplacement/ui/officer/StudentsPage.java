@@ -11,9 +11,13 @@ import com.campusplacement.ui.components.FilterBar;
 import com.campusplacement.ui.components.FormDialog;
 import com.campusplacement.ui.components.HintField;
 import com.campusplacement.ui.components.Icons.Glyph;
+import com.campusplacement.ui.components.KpiBanner;
 import com.campusplacement.ui.components.Page;
+import com.campusplacement.ui.components.StatTile;
 import com.campusplacement.ui.components.Ui;
 import java.awt.BorderLayout;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
@@ -32,6 +36,10 @@ public class StudentsPage extends Page {
             .col("Backlogs", Student::backlogs, 70, Kind.NUMBER)
             .col("Email", Student::email, 230)
             .col("Phone", Student::phone, 110);
+    private final StatTile kpiTotal = new StatTile("Registered Students", "Active student profiles", false);
+    private final StatTile kpiEligible = new StatTile("Zero Backlogs", "Immediate drive eligibility", true);
+    private final StatTile kpiAvgCgpa = new StatTile("Average CGPA", "Batch academic standing", false);
+    private final StatTile kpiDepts = new StatTile("Departments", "Academic disciplines", false);
     private final HintField search;
     private final JComboBox<Department> dept;
     private final JComboBox<Integer> year;
@@ -53,14 +61,26 @@ public class StudentsPage extends Page {
         Btn del = new Btn("Delete", Btn.Variant.DANGER, Glyph.TRASH);
         del.addActionListener(e -> delete());
         table.onDoubleClick(this::details);
+
+        KpiBanner kpiBanner = new KpiBanner(kpiTotal, kpiEligible, kpiAvgCgpa, kpiDepts);
+
+        JPanel cardContent = new JPanel(new BorderLayout(0, 12));
+        cardContent.setOpaque(false);
+
         JPanel top = new JPanel(new BorderLayout());
         top.setOpaque(false);
         top.add(bar, BorderLayout.WEST);
         top.add(Ui.rightRow(details, edit, del), BorderLayout.EAST);
-        JPanel body = new JPanel(new BorderLayout(0, 12));
+
+        cardContent.add(top, BorderLayout.NORTH);
+        cardContent.add(table, BorderLayout.CENTER);
+
+        JPanel tableCard = Ui.card(cardContent, 18);
+
+        JPanel body = new JPanel(new BorderLayout(0, 14));
         body.setOpaque(false);
-        body.add(top, BorderLayout.NORTH);
-        body.add(table, BorderLayout.CENTER);
+        body.add(kpiBanner, BorderLayout.NORTH);
+        body.add(tableCard, BorderLayout.CENTER);
         setBody(body);
     }
 
@@ -137,6 +157,17 @@ public class StudentsPage extends Page {
         Integer y = (Integer) year.getSelectedItem();
         List<Student> rows = load(() -> service.list(search.getText(), d == null ? null : d.deptId(), y), List.of());
         table.setRows(rows);
-        setSubtitle(rows.size() + " student(s) shown. Double-click a row for academic records, skills, applications and offers.");
+
+        int total = rows.size();
+        long zeroBacklogs = rows.stream().filter(s -> s.backlogs() == 0).count();
+        double avgCgpa = rows.stream().mapToDouble(s -> s.cgpa() != null ? s.cgpa().doubleValue() : 0.0).average().orElse(0.0);
+        long distinctDepts = rows.stream().map(Student::deptCode).distinct().count();
+
+        kpiTotal.setValue(total);
+        kpiEligible.setValue(zeroBacklogs + " (" + (total > 0 ? (zeroBacklogs * 100 / total) : 0) + "%)");
+        kpiAvgCgpa.setValue(String.format("%.2f", avgCgpa));
+        kpiDepts.setValue(distinctDepts);
+
+        setSubtitle(total + " student(s) shown. Double-click a row for academic records, skills, applications and offers.");
     }
 }

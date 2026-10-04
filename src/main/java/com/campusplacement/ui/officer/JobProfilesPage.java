@@ -13,10 +13,14 @@ import com.campusplacement.ui.components.FilterBar;
 import com.campusplacement.ui.components.FormDialog;
 import com.campusplacement.ui.components.HintField;
 import com.campusplacement.ui.components.Icons.Glyph;
+import com.campusplacement.ui.components.KpiBanner;
 import com.campusplacement.ui.components.Page;
+import com.campusplacement.ui.components.StatTile;
 import com.campusplacement.ui.components.Ui;
+import com.campusplacement.util.Formats;
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.swing.JComboBox;
@@ -27,6 +31,9 @@ import javax.swing.JTextField;
 public class JobProfilesPage extends Page {
     private final CompanyService service = new CompanyService();
     private final DataTable<JobProfile> table = jobTable();
+    private final StatTile kpiTotalJobs = new StatTile("Job Profiles", "Available career profiles", false);
+    private final StatTile kpiAvgPkg = new StatTile("Average Package", "Mean compensation", false);
+    private final StatTile kpiMaxPkg = new StatTile("Top Package", "Highest offering", true);
     private final HintField search;
     private JComboBox<Company> company;
     private boolean loading;
@@ -64,14 +71,26 @@ public class JobProfilesPage extends Page {
             }
         });
         table.onDoubleClick(j -> { if (edit(this, j, null)) { refresh(); } });
+
+        KpiBanner kpiBanner = new KpiBanner(kpiTotalJobs, kpiAvgPkg, kpiMaxPkg);
+
+        JPanel cardContent = new JPanel(new BorderLayout(0, 12));
+        cardContent.setOpaque(false);
+
         JPanel top = new JPanel(new BorderLayout());
         top.setOpaque(false);
         top.add(bar, BorderLayout.WEST);
         top.add(Ui.rightRow(edit, del), BorderLayout.EAST);
-        JPanel body = new JPanel(new BorderLayout(0, 12));
+
+        cardContent.add(top, BorderLayout.NORTH);
+        cardContent.add(table, BorderLayout.CENTER);
+
+        JPanel tableCard = Ui.card(cardContent, 18);
+
+        JPanel body = new JPanel(new BorderLayout(0, 14));
         body.setOpaque(false);
-        body.add(top, BorderLayout.NORTH);
-        body.add(table, BorderLayout.CENTER);
+        body.add(kpiBanner, BorderLayout.NORTH);
+        body.add(tableCard, BorderLayout.CENTER);
         setBody(body);
     }
 
@@ -123,6 +142,15 @@ public class JobProfilesPage extends Page {
 
     private void reloadTable() {
         Company c = (Company) company.getSelectedItem();
-        table.setRows(load(() -> service.jobs(c == null ? null : c.companyId(), search.getText()), List.of()));
+        List<JobProfile> list = load(() -> service.jobs(c == null ? null : c.companyId(), search.getText()), List.of());
+        table.setRows(list);
+
+        int count = list.size();
+        double avg = list.stream().mapToDouble(j -> j.packageLpa() != null ? j.packageLpa().doubleValue() : 0.0).average().orElse(0.0);
+        BigDecimal max = list.stream().map(JobProfile::packageLpa).filter(p -> p != null).max(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
+
+        kpiTotalJobs.setValue(count);
+        kpiAvgPkg.setValue(avg > 0 ? String.format("\u20B9 %.2f LPA", avg) : "—");
+        kpiMaxPkg.setValue(max.compareTo(BigDecimal.ZERO) > 0 ? Formats.lpa(max) : "—");
     }
 }

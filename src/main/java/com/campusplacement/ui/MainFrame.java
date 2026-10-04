@@ -168,7 +168,7 @@ public class MainFrame extends JFrame {
                 BorderFactory.createMatteBorder(0, 0, 1, 0, Theme.BORDER),
                 BorderFactory.createEmptyBorder(0, 24, 0, 24)));
 
-        JPanel brand = Ui.row();
+        JPanel brand = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 17));
         brand.setOpaque(false);
         mark = Ui.label("CAMPUS PLACEMENTS", Theme.sansBold(14), Theme.TEXT);
         mark.setIcon(Icons.of(Glyph.DASHBOARD, 18, Theme.TEXT));

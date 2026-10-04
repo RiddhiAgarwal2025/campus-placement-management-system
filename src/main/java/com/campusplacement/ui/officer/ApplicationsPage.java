@@ -14,7 +14,9 @@ import com.campusplacement.ui.components.DataTable.Kind;
 import com.campusplacement.ui.components.FilterBar;
 import com.campusplacement.ui.components.HintField;
 import com.campusplacement.ui.components.Icons.Glyph;
+import com.campusplacement.ui.components.KpiBanner;
 import com.campusplacement.ui.components.Page;
+import com.campusplacement.ui.components.StatTile;
 import com.campusplacement.ui.components.Ui;
 import java.awt.BorderLayout;
 import java.util.Arrays;
@@ -39,6 +41,10 @@ public class ApplicationsPage extends Page {
             .col("Position", Application::position, 160)
             .col("Status", Application::status, 110, Kind.BADGE)
             .multiSelect();
+    private final StatTile kpiTotal = new StatTile("Applications", "Total submitted", false);
+    private final StatTile kpiShort = new StatTile("Shortlisted", "In active evaluation", false);
+    private final StatTile kpiSelect = new StatTile("Selected", "Cleared selection", true);
+    private final StatTile kpiReject = new StatTile("Rejected", "Archived files", false);
     private final HintField search;
     private final JComboBox<Drive> drive;
     private final JComboBox<Company> company;
@@ -73,19 +79,34 @@ public class ApplicationsPage extends Page {
         export.addActionListener(e -> ReportsPage.exportCsv(this, table.model(), "applications.csv"));
         addAction(export);
         table.onDoubleClick(a -> new StudentDetailDialog(this, a.studentId()).setVisible(true));
-        JPanel top = new JPanel(new BorderLayout(0, 10));
-        top.setOpaque(false);
-        top.add(bar, BorderLayout.NORTH);
+
+        // Top KPI Banner
+        KpiBanner kpiBanner = new KpiBanner(kpiTotal, kpiShort, kpiSelect, kpiReject);
+
+        // Elevated Main Table Card
+        JPanel cardContent = new JPanel(new BorderLayout(0, 12));
+        cardContent.setOpaque(false);
+
+        JPanel topToolbar = new JPanel(new BorderLayout(0, 10));
+        topToolbar.setOpaque(false);
+        topToolbar.add(bar, BorderLayout.NORTH);
+
         JPanel actions = new JPanel(new BorderLayout());
         actions.setOpaque(false);
         actions.add(Ui.muted("Select one or more rows (Ctrl/Shift-click) to change status. Round results update statuses automatically."),
                 BorderLayout.WEST);
         actions.add(Ui.rightRow(record, shortlist, select, reject), BorderLayout.EAST);
-        top.add(actions, BorderLayout.SOUTH);
-        JPanel body = new JPanel(new BorderLayout(0, 12));
+        topToolbar.add(actions, BorderLayout.SOUTH);
+
+        cardContent.add(topToolbar, BorderLayout.NORTH);
+        cardContent.add(table, BorderLayout.CENTER);
+
+        JPanel tableCard = Ui.card(cardContent, 18);
+
+        JPanel body = new JPanel(new BorderLayout(0, 14));
         body.setOpaque(false);
-        body.add(top, BorderLayout.NORTH);
-        body.add(table, BorderLayout.CENTER);
+        body.add(kpiBanner, BorderLayout.NORTH);
+        body.add(tableCard, BorderLayout.CENTER);
         setBody(body);
     }
 
@@ -136,8 +157,10 @@ public class ApplicationsPage extends Page {
                 c == null ? null : c.companyId(), dp == null ? null : dp.deptId(), (String) status.getSelectedItem()), List.of());
         table.setRows(rows);
         Map<String, Long> counts = rows.stream().collect(Collectors.groupingBy(Application::status, Collectors.counting()));
-        setSubtitle(rows.size() + " shown   |   Applied " + counts.getOrDefault("APPLIED", 0L) + "   Shortlisted "
-                + counts.getOrDefault("SHORTLISTED", 0L) + "   Selected " + counts.getOrDefault("SELECTED", 0L)
-                + "   Rejected " + counts.getOrDefault("REJECTED", 0L));
+        kpiTotal.setValue(rows.size());
+        kpiShort.setValue(counts.getOrDefault("SHORTLISTED", 0L));
+        kpiSelect.setValue(counts.getOrDefault("SELECTED", 0L));
+        kpiReject.setValue(counts.getOrDefault("REJECTED", 0L));
+        setSubtitle("Showing " + rows.size() + " active candidate records filtered across drives.");
     }
 }

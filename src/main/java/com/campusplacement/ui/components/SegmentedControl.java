@@ -1,11 +1,12 @@
 package com.campusplacement.ui.components;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.GridLayout;
 import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -15,9 +16,11 @@ import java.util.function.Consumer;
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 
 /**
  * Apple macOS / Windows 11 Fluent style segmented control (pill tab switch).
+ * Automatically balances segments into equal widths spanning the full container.
  */
 public class SegmentedControl extends JPanel {
     private final List<Segment> segments = new ArrayList<>();
@@ -25,9 +28,9 @@ public class SegmentedControl extends JPanel {
     private Consumer<Integer> onSelect;
 
     public SegmentedControl(String... items) {
-        setLayout(new FlowLayout(FlowLayout.LEFT, 4, 3));
+        setLayout(new GridLayout(1, items.length, 4, 0));
         setOpaque(false);
-        setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+        setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
 
         for (int i = 0; i < items.length; i++) {
             final int index = i;
@@ -78,15 +81,16 @@ public class SegmentedControl extends JPanel {
         private boolean hover;
 
         Segment(String text, boolean initialSelected, Runnable onClick) {
+            super(new BorderLayout());
             this.selected = initialSelected;
             setOpaque(false);
             setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            setBorder(BorderFactory.createEmptyBorder(5, 14, 5, 14));
+            setBorder(BorderFactory.createEmptyBorder(4, 10, 4, 10));
 
-            label = new JLabel(text);
+            label = new JLabel(text, SwingConstants.CENTER);
             label.setFont(Theme.sans(12));
             updateLook();
-            add(label);
+            add(label, BorderLayout.CENTER);
 
             addMouseListener(new MouseAdapter() {
                 @Override
@@ -123,16 +127,16 @@ public class SegmentedControl extends JPanel {
                 int h = getHeight();
                 Color fill = Theme.isDarkMode ? new Color(0x22, 0x2E, 0x42) : Color.WHITE;
                 g2.setColor(fill);
-                g2.fillRoundRect(1, 1, w - 3, h - 3, 7, 7);
+                g2.fillRoundRect(0, 0, w - 1, h - 1, 8, 8);
                 g2.setColor(Theme.BORDER);
-                g2.drawRoundRect(1, 1, w - 3, h - 3, 7, 7);
+                g2.drawRoundRect(0, 0, w - 1, h - 1, 8, 8);
                 g2.dispose();
             } else if (hover) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 Color fill = Theme.isDarkMode ? new Color(0x18, 0x22, 0x33) : new Color(0xDF, 0xE5, 0xEC);
                 g2.setColor(fill);
-                g2.fillRoundRect(1, 1, getWidth() - 3, getHeight() - 3, 7, 7);
+                g2.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 8, 8);
                 g2.dispose();
             }
             super.paintComponent(g);

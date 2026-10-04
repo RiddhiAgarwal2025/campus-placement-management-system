@@ -9,7 +9,12 @@ import java.awt.FlowLayout;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.RenderingHints;
+import java.awt.Stroke;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -102,14 +107,57 @@ public class OfferVelocityLineChartCard extends JPanel {
         super.paintComponent(g);
     }
 
-    /** Dual Line Trend Chart Canvas */
+    /** Dual Line Trend Chart Canvas with interactive hover tooltips */
     private static class LineCanvas extends JPanel {
         private final String[] dates = {"24 Sep", "27 Sep", "01 Oct", "02 Oct", "03 Oct"};
         private final int[] lineApps = {3, 7, 14, 20, 25};
         private final int[] lineOffers = {0, 1, 3, 5, 6};
+        private int hoveredNode = -1;
+        private Point mousePt = null;
 
         LineCanvas() {
             setOpaque(false);
+
+            addMouseMotionListener(new MouseMotionAdapter() {
+                @Override
+                public void mouseMoved(MouseEvent e) {
+                    int w = getWidth();
+                    int padX = 26;
+                    int n = dates.length;
+                    if (n <= 1) return;
+                    int step = (w - 2 * padX) / (n - 1);
+                    int mx = e.getX();
+                    int my = e.getY();
+                    int bottomMargin = 26;
+                    int baseline = getHeight() - bottomMargin;
+
+                    int newHovered = -1;
+                    if (my >= 6 && my <= baseline + 20 && mx >= padX - step / 2 && mx <= w - padX + step / 2) {
+                        int idx = Math.round((float) (mx - padX) / step);
+                        if (idx >= 0 && idx < n) {
+                            newHovered = idx;
+                        }
+                    }
+
+                    if (newHovered != hoveredNode) {
+                        hoveredNode = newHovered;
+                        mousePt = (newHovered >= 0) ? e.getPoint() : null;
+                        repaint();
+                    } else if (newHovered >= 0) {
+                        mousePt = e.getPoint();
+                        repaint();
+                    }
+                }
+            });
+
+            addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseExited(MouseEvent e) {
+                    hoveredNode = -1;
+                    mousePt = null;
+                    repaint();
+                }
+            });
         }
 
         @Override
@@ -151,6 +199,17 @@ public class OfferVelocityLineChartCard extends JPanel {
             Color colorApps = Theme.isDarkMode ? new Color(0x60, 0xA5, 0xFA) : Theme.PLUM;
             Color colorOffers = Theme.isDarkMode ? new Color(0xD9, 0x9B, 0x43) : new Color(0x7A, 0x5A, 0x1E);
 
+            // Draw vertical dashed guide line for hovered node
+            if (hoveredNode >= 0 && hoveredNode < n) {
+                int hx = xs[hoveredNode];
+                Stroke oldStroke = g2.getStroke();
+                Stroke dashed = new BasicStroke(1.2f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10.0f, new float[]{4.0f, 4.0f}, 0.0f);
+                g2.setStroke(dashed);
+                g2.setColor(Theme.isDarkMode ? new Color(0x3B, 0x82, 0xF6, 120) : new Color(0x38, 0x58, 0x8C, 100));
+                g2.drawLine(hx, topMargin - 4, hx, baseline);
+                g2.setStroke(oldStroke);
+            }
+
             // Draw Submissions Line
             g2.setColor(colorApps);
             g2.setStroke(new BasicStroke(2.4f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
@@ -159,10 +218,15 @@ public class OfferVelocityLineChartCard extends JPanel {
             }
             // Dots
             for (int i = 0; i < n; i++) {
+                boolean isHov = (i == hoveredNode);
+                if (isHov) {
+                    g2.setColor(Theme.isDarkMode ? new Color(0x60, 0xA5, 0xFA, 70) : new Color(0x38, 0x58, 0x8C, 60));
+                    g2.fillOval(xs[i] - 9, ysApps[i] - 9, 18, 18);
+                }
                 g2.setColor(Theme.SURFACE);
-                g2.fillOval(xs[i] - 5, ysApps[i] - 5, 10, 10);
+                g2.fillOval(xs[i] - (isHov ? 6 : 5), ysApps[i] - (isHov ? 6 : 5), isHov ? 12 : 10, isHov ? 12 : 10);
                 g2.setColor(colorApps);
-                g2.fillOval(xs[i] - 3, ysApps[i] - 3, 6, 6);
+                g2.fillOval(xs[i] - (isHov ? 4 : 3), ysApps[i] - (isHov ? 4 : 3), isHov ? 8 : 6, isHov ? 8 : 6);
             }
 
             // Draw Offers Line
@@ -173,17 +237,24 @@ public class OfferVelocityLineChartCard extends JPanel {
             }
             // Dots
             for (int i = 0; i < n; i++) {
+                boolean isHov = (i == hoveredNode);
+                if (isHov) {
+                    g2.setColor(Theme.isDarkMode ? new Color(0xFB, 0xBF, 0x24, 70) : new Color(0x7A, 0x5A, 0x1E, 60));
+                    g2.fillOval(xs[i] - 8, ysOffers[i] - 8, 16, 16);
+                }
                 g2.setColor(Theme.SURFACE);
-                g2.fillOval(xs[i] - 4, ysOffers[i] - 4, 8, 8);
+                g2.fillOval(xs[i] - (isHov ? 5 : 4), ysOffers[i] - (isHov ? 5 : 4), isHov ? 10 : 8, isHov ? 10 : 8);
                 g2.setColor(colorOffers);
-                g2.fillOval(xs[i] - 2, ysOffers[i] - 2, 4, 4);
+                g2.fillOval(xs[i] - (isHov ? 3 : 2), ysOffers[i] - (isHov ? 3 : 2), isHov ? 6 : 4, isHov ? 6 : 4);
             }
 
             // X-Axis Date Labels
             g2.setFont(Theme.sans(10));
-            g2.setColor(Theme.MUTED);
             FontMetrics fm = g2.getFontMetrics();
             for (int i = 0; i < n; i++) {
+                boolean isHov = (i == hoveredNode);
+                g2.setFont(isHov ? Theme.sansBold(10) : Theme.sans(10));
+                g2.setColor(isHov ? Theme.TEXT : Theme.MUTED);
                 int dw = fm.stringWidth(dates[i]);
                 g2.drawString(dates[i], xs[i] - dw / 2, baseline + 15);
             }
@@ -205,6 +276,38 @@ public class OfferVelocityLineChartCard extends JPanel {
             g2.fillOval(leg2X, legY - 7, 8, 8);
             g2.setColor(Theme.MUTED);
             g2.drawString("Offers Extended", leg2X + 12, legY);
+
+            // Floating Tooltip Card
+            if (hoveredNode >= 0 && hoveredNode < n) {
+                int tipW = 152;
+                int tipH = 64;
+                int hx = xs[hoveredNode];
+                int tipX = Math.max(10, Math.min(w - tipW - 10, hx - tipW / 2));
+                int tipY = Math.max(4, topMargin - 4);
+
+                g2.setColor(Theme.isDarkMode ? new Color(0x0F, 0x17, 0x2A, 245) : new Color(0x1E, 0x29, 0x3B, 242));
+                g2.fillRoundRect(tipX, tipY, tipW, tipH, 8, 8);
+                g2.setColor(Theme.isDarkMode ? new Color(0x33, 0x41, 0x55) : new Color(0x47, 0x55, 0x69));
+                g2.drawRoundRect(tipX, tipY, tipW, tipH, 8, 8);
+
+                // Date Title
+                g2.setFont(Theme.sansBold(10));
+                g2.setColor(Color.WHITE);
+                g2.drawString(dates[hoveredNode] + " Milestone", tipX + 10, tipY + 16);
+
+                // Apps row
+                g2.setFont(Theme.sans(10));
+                g2.setColor(new Color(0x60, 0xA5, 0xFA));
+                g2.fillOval(tipX + 10, tipY + 26, 6, 6);
+                g2.setColor(new Color(0xDF, 0xE4, 0xEA));
+                g2.drawString("Submissions: " + lineApps[hoveredNode], tipX + 20, tipY + 33);
+
+                // Offers row
+                g2.setColor(new Color(0xFB, 0xBF, 0x24));
+                g2.fillOval(tipX + 10, tipY + 41, 6, 6);
+                g2.setColor(new Color(0xDF, 0xE4, 0xEA));
+                g2.drawString("Offers: " + lineOffers[hoveredNode], tipX + 20, tipY + 48);
+            }
 
             g2.dispose();
         }

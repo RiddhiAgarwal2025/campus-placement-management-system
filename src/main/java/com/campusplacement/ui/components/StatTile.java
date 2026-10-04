@@ -1,33 +1,50 @@
 package com.campusplacement.ui.components;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-/** A single statistic: a large serif figure with a label and caption. */
+/** A single statistic card styled with 14px rounded corners matching the Figma design system. */
 public class StatTile extends JPanel {
-    private final JLabel value = Ui.label("—", Theme.sansBold(28), Theme.TEXT);
+    private final JLabel value = Ui.label("—", Theme.sansBold(24), Theme.TEXT);
     private final boolean accent;
 
     public StatTile(String label, String caption, boolean accent) {
         super(new BorderLayout(0, 4));
         this.accent = accent;
-        setBackground(Theme.SURFACE);
-        setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(Theme.BORDER),
-                BorderFactory.createEmptyBorder(16, 18, 16, 18)));
+        setOpaque(false);
+        setBorder(BorderFactory.createEmptyBorder(14, 18, 14, 18));
         JLabel l = Ui.label(label.toUpperCase(), Theme.sansBold(11), Theme.MUTED);
         add(l, BorderLayout.NORTH);
         add(value, BorderLayout.CENTER);
         add(Ui.label(caption, Theme.sans(12), Theme.MUTED), BorderLayout.SOUTH);
     }
 
-    public void setValue(Number n) { value.setText(n == null ? "0" : String.valueOf(n)); }
+    public void setValue(Object o) {
+        value.setText(o == null ? "—" : String.valueOf(o));
+    }
 
     @Override
     protected void paintComponent(Graphics g) {
+        Graphics2D g2 = (Graphics2D) g.create();
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        int w = getWidth();
+        int h = getHeight();
+
+        // 14px rounded card fill & hairline border
+        g2.setColor(Theme.SURFACE);
+        g2.fillRoundRect(0, 0, w - 1, h - 1, 14, 14);
+        Color border = accent ? (Theme.isDarkMode ? new Color(0x3B, 0x82, 0xF6) : Theme.PLUM) : Theme.BORDER;
+        g2.setColor(border);
+        g2.drawRoundRect(0, 0, w - 1, h - 1, 14, 14);
+
+        g2.dispose();
         super.paintComponent(g);
     }
 }
+

@@ -10,7 +10,9 @@ import com.campusplacement.ui.components.FilterBar;
 import com.campusplacement.ui.components.FormDialog;
 import com.campusplacement.ui.components.HintField;
 import com.campusplacement.ui.components.Icons.Glyph;
+import com.campusplacement.ui.components.KpiBanner;
 import com.campusplacement.ui.components.Page;
+import com.campusplacement.ui.components.StatTile;
 import com.campusplacement.ui.components.Theme;
 import com.campusplacement.ui.components.Ui;
 import java.awt.BorderLayout;
@@ -34,8 +36,12 @@ public class CompaniesPage extends Page {
             .col("Position", JobProfile::position, 170)
             .col("Package", JobProfile::packageLpa, 110, Kind.MONEY)
             .col("Location", JobProfile::location, 100);
+    private final StatTile kpiPartners = new StatTile("Recruiting Partners", "Active enterprise partners", false);
+    private final StatTile kpiJobs = new StatTile("Job Profiles", "Registered hiring roles", false);
+    private final StatTile kpiDrives = new StatTile("Drives Held", "Placement campaigns", true);
+    private final StatTile kpiIndustries = new StatTile("Industries", "Core employment sectors", false);
     private final HintField search;
-    private final JLabel name = Ui.label("Select a company", Theme.serif(22), Theme.TEXT);
+    private final JLabel name = Ui.label("Select a company", Theme.sansBold(20), Theme.TEXT);
     private final JPanel facts = Ui.vstack(0);
 
     public CompaniesPage() {
@@ -56,10 +62,21 @@ public class CompaniesPage extends Page {
         });
         table.onSelect(this::showDetail);
         table.onDoubleClick(this::edit);
+
+        KpiBanner kpiBanner = new KpiBanner(kpiPartners, kpiJobs, kpiDrives, kpiIndustries);
+
+        JPanel tableCardContent = new JPanel(new BorderLayout(0, 12));
+        tableCardContent.setOpaque(false);
+
         JPanel top = new JPanel(new BorderLayout());
         top.setOpaque(false);
         top.add(bar, BorderLayout.WEST);
         top.add(Ui.rightRow(edit, del), BorderLayout.EAST);
+
+        tableCardContent.add(top, BorderLayout.NORTH);
+        tableCardContent.add(table, BorderLayout.CENTER);
+
+        JPanel tableCard = Ui.card(tableCardContent, 18);
 
         JPanel detail = new JPanel(new BorderLayout(0, 12));
         detail.setOpaque(false);
@@ -88,11 +105,12 @@ public class CompaniesPage extends Page {
 
         JPanel center = new JPanel(new BorderLayout(16, 0));
         center.setOpaque(false);
-        center.add(table, BorderLayout.CENTER);
+        center.add(tableCard, BorderLayout.CENTER);
         center.add(detailCard, BorderLayout.EAST);
-        JPanel body = new JPanel(new BorderLayout(0, 12));
+
+        JPanel body = new JPanel(new BorderLayout(0, 14));
         body.setOpaque(false);
-        body.add(top, BorderLayout.NORTH);
+        body.add(kpiBanner, BorderLayout.NORTH);
         body.add(center, BorderLayout.CENTER);
         setBody(body);
     }
@@ -142,7 +160,19 @@ public class CompaniesPage extends Page {
     @Override
     public void refresh() {
         Company keep = table.selected();
-        table.setRows(load(() -> service.list(search.getText()), List.of()));
+        List<Company> list = load(() -> service.list(search.getText()), List.of());
+        table.setRows(list);
+
+        int totalPartners = list.size();
+        long totalJobs = list.stream().mapToInt(Company::jobCount).sum();
+        long totalDrives = list.stream().mapToInt(Company::driveCount).sum();
+        long uniqueIndustries = list.stream().map(Company::industry).filter(i -> i != null && !i.isBlank()).distinct().count();
+
+        kpiPartners.setValue(totalPartners);
+        kpiJobs.setValue(totalJobs);
+        kpiDrives.setValue(totalDrives);
+        kpiIndustries.setValue(uniqueIndustries);
+
         if (keep == null || table.selected() == null) {
             showDetail(table.selected());
         }
