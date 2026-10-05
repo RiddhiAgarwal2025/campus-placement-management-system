@@ -18,6 +18,7 @@ import com.campusplacement.ui.components.HintField;
 import com.campusplacement.ui.components.Icons.Glyph;
 import com.campusplacement.ui.components.KpiBanner;
 import com.campusplacement.ui.components.Page;
+import com.campusplacement.ui.components.Searchable;
 import com.campusplacement.ui.components.StatTile;
 import com.campusplacement.ui.components.Theme;
 import com.campusplacement.ui.components.Ui;
@@ -34,7 +35,7 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-public class StudentDrivesPage extends Page {
+public class StudentDrivesPage extends Page implements Searchable {
     private final DriveService drives = new DriveService();
     private final EligibilityService eligibility = new EligibilityService();
     private final ApplicationService applications = new ApplicationService();
@@ -215,4 +216,16 @@ public class StudentDrivesPage extends Page {
         showDetail(table.selected());
     }
 
+    @Override
+    public void setSearch(String text) {
+        if (search != null) {
+            search.setText(text == null ? "" : text);
+            refresh();
+        }
+    }
+
+    @Override
+    public String getSearch() {
+        return search == null ? "" : search.getText();
+    }
 }

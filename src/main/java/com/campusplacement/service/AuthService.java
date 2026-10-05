@@ -8,13 +8,20 @@ import com.campusplacement.util.PasswordUtil;
 public class AuthService {
     private final UserDao users = new UserDao();
 
+    private static final String DUMMY_HASH =
+            "pbkdf2_sha256$65536$AAAAAAAAAAAAAAAAAAAAAA==$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+
     public User login(String username, String password) {
         if (username == null || username.isBlank() || password == null || password.isEmpty()) {
             throw new ServiceException("Enter your username and password.");
         }
         User u = Db.query(c -> {
             UserDao.Credentials cr = users.findByUsername(c, username.trim()).orElse(null);
-            if (cr == null || !PasswordUtil.verify(password, cr.passwordHash())) {
+            if (cr == null) {
+                PasswordUtil.verify(password, DUMMY_HASH);
+                throw new ServiceException("Invalid username or password.");
+            }
+            if (!PasswordUtil.verify(password, cr.passwordHash())) {
                 throw new ServiceException("Invalid username or password.");
             }
             if (!cr.active()) {

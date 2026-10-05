@@ -70,10 +70,11 @@ public class DriveService {
     public int create(DriveForm form, CriteriaForm criteria) {
         Session.requireOfficer();
         Drive d = validate(0, form, true);
-        validate(0, criteria);
+        EligibilityCriteria cr = validate(0, criteria);
         return Db.tx(c -> {
             int id = dao.insert(c, d);
-            dao.saveCriteria(c, validate(id, criteria));
+            dao.saveCriteria(c, new EligibilityCriteria(cr.criteriaId(), id, cr.minCgpa(),
+                    cr.maxBacklogs(), cr.graduationYear(), cr.departments(), cr.skills()));
             return id;
         });
     }

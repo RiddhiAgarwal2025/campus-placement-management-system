@@ -12,6 +12,7 @@ import com.campusplacement.ui.components.HintField;
 import com.campusplacement.ui.components.Icons.Glyph;
 import com.campusplacement.ui.components.KpiBanner;
 import com.campusplacement.ui.components.Page;
+import com.campusplacement.ui.components.Searchable;
 import com.campusplacement.ui.components.StatTile;
 import com.campusplacement.ui.components.Ui;
 import java.awt.BorderLayout;
@@ -20,7 +21,7 @@ import java.util.List;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
-public class SkillsPage extends Page {
+public class SkillsPage extends Page implements Searchable {
     private final SkillService service = new SkillService();
     private final DataTable<Skill> table = new DataTable<Skill>("No skills match", "Add a skill or change the search.")
             .col("Skill", Skill::name, 260)
@@ -106,5 +107,18 @@ public class SkillsPage extends Page {
         kpiTotalSkills.setValue(count);
         kpiCategories.setValue(cats);
         kpiTopSkill.setValue(top != null ? top.name() + " (" + top.studentCount() + ")" : "—");
+    }
+
+    @Override
+    public void setSearch(String text) {
+        if (search != null) {
+            search.setText(text == null ? "" : text);
+            refresh();
+        }
+    }
+
+    @Override
+    public String getSearch() {
+        return search == null ? "" : search.getText();
     }
 }

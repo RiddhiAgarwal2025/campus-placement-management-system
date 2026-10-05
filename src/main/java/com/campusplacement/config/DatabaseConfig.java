@@ -22,7 +22,14 @@ public final class DatabaseConfig {
     }
 
     public static synchronized DatabaseConfig get() {
-        return load();
+        if (instance == null) {
+            instance = load();
+        }
+        return instance;
+    }
+
+    public static synchronized void reload() {
+        instance = load();
     }
 
     private static DatabaseConfig load() {
@@ -47,11 +54,19 @@ public final class DatabaseConfig {
         } catch (IOException e) {
             throw new IllegalStateException("Could not read db.properties: " + e.getMessage(), e);
         }
-        return new DatabaseConfig(
-                p.getProperty("db.url", "jdbc:mysql://localhost:3306/campus_placement").trim(),
-                p.getProperty("db.username", "root").trim(),
-                p.getProperty("db.password", ""),
-                source);
+
+        String envUrl = System.getenv("DB_URL");
+        String envUser = System.getenv("DB_USER") != null ? System.getenv("DB_USER") : System.getenv("DB_USERNAME");
+        String envPass = System.getenv("DB_PASSWORD");
+
+        String url = envUrl != null && !envUrl.isBlank() ? envUrl.trim()
+                : p.getProperty("db.url", "jdbc:mysql://localhost:3306/campus_placement").trim();
+        String username = envUser != null && !envUser.isBlank() ? envUser.trim()
+                : p.getProperty("db.username", "root").trim();
+        String password = envPass != null ? envPass
+                : p.getProperty("db.password", "");
+
+        return new DatabaseConfig(url, username, password, source);
     }
 
     public String url() { return url; }

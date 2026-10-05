@@ -18,7 +18,7 @@ public class DashboardService {
     private final OfferDao offers = new OfferDao();
 
     public record OfficerDashboard(DashboardStats stats, List<Drive> upcoming, List<Application> recentApplications,
-                                   List<Offer> recentOffers) { }
+                                   List<Offer> recentOffers, java.util.Map<String, int[]> deptPlacements) { }
 
     public record StudentDashboard(DashboardStats stats, List<Drive> openDrives, List<Application> applications,
                                    List<Offer> offers) { }
@@ -26,7 +26,7 @@ public class DashboardService {
     public OfficerDashboard officer() {
         Session.requireOfficer();
         return Db.query(c -> new OfficerDashboard(new DashboardStats(dao.officerStats(c)), drives.upcoming(c, 6),
-                applications.recent(c, 8), offers.recent(c, 6)));
+                applications.recent(c, 8), offers.recent(c, 6), dao.departmentPlacements(c)));
     }
 
     public StudentDashboard student() {

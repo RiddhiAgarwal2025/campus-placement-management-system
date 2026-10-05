@@ -70,6 +70,26 @@ public class EligibilityService {
         return Db.query(c -> check(c, studentId, driveId));
     }
 
+    /** Evaluates a single student across multiple drives efficiently in one database connection. */
+    public Map<Integer, EligibilityResult> checkStudentDrives(String studentId, List<Integer> driveIds) {
+        if (driveIds == null || driveIds.isEmpty()) {
+            return Map.of();
+        }
+        return Db.query(c -> {
+            Student s = students.findById(c, studentId)
+                    .orElseThrow(() -> new ServiceException("Student " + studentId + " was not found."));
+            Set<Integer> ids = skills.studentSkills(c, studentId).stream().map(StudentSkill::skillId).collect(Collectors.toSet());
+            Map<Integer, EligibilityResult> map = new java.util.HashMap<>();
+            for (int dId : driveIds) {
+                try {
+                    map.put(dId, evaluate(s, ids, criteria(c, dId)));
+                } catch (Exception ignored) {
+                }
+            }
+            return map;
+        });
+    }
+
     /** Evaluates every student for a drive; eligible students first, then by CGPA. */
     public List<EligibilityResult> checkAll(int driveId) {
         return Db.query(c -> {

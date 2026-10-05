@@ -7,6 +7,7 @@ import com.campusplacement.ui.components.Btn;
 import com.campusplacement.ui.components.Icons.Glyph;
 import com.campusplacement.ui.components.KpiBanner;
 import com.campusplacement.ui.components.Page;
+import com.campusplacement.ui.components.Searchable;
 import com.campusplacement.ui.components.StatTile;
 import com.campusplacement.ui.components.Theme;
 import com.campusplacement.ui.components.Ui;
@@ -24,9 +25,10 @@ import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.JPanel;
 
-public class MyOffersPage extends Page {
+public class MyOffersPage extends Page implements Searchable {
     private final OfferService service = new OfferService();
     private final JPanel list = Ui.vstack(0);
+    private String filterQuery = "";
     private final StatTile kpiTotal = new StatTile("Total Offers", "Extended to you", false);
     private final StatTile kpiAccepted = new StatTile("Accepted", "Confirmed placement", false);
     private final StatTile kpiMaxPkg = new StatTile("Top Package", "Highest offering", false);
@@ -120,7 +122,11 @@ public class MyOffersPage extends Page {
 
     @Override
     public void refresh() {
-        List<Offer> offers = load(service::mine, List.of());
+        List<Offer> all = load(service::mine, List.of());
+        List<Offer> offers = filterQuery.isEmpty() ? all : all.stream().filter(o ->
+                (o.companyName() != null && o.companyName().toLowerCase().contains(filterQuery)) ||
+                (o.position() != null && o.position().toLowerCase().contains(filterQuery)) ||
+                (o.status() != null && o.status().toLowerCase().contains(filterQuery))).toList();
         list.removeAll();
         if (offers.isEmpty()) {
             JPanel empty = Ui.vstack(0);
@@ -143,5 +149,16 @@ public class MyOffersPage extends Page {
 
         list.revalidate();
         list.repaint();
+    }
+
+    @Override
+    public void setSearch(String text) {
+        this.filterQuery = text == null ? "" : text.trim().toLowerCase();
+        refresh();
+    }
+
+    @Override
+    public String getSearch() {
+        return filterQuery;
     }
 }

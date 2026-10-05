@@ -11,6 +11,7 @@ import com.campusplacement.ui.components.HintField;
 import com.campusplacement.ui.components.Icons.Glyph;
 import com.campusplacement.ui.components.KpiBanner;
 import com.campusplacement.ui.components.Page;
+import com.campusplacement.ui.components.Searchable;
 import com.campusplacement.ui.components.StatTile;
 import com.campusplacement.ui.components.Ui;
 import java.awt.BorderLayout;
@@ -19,7 +20,7 @@ import java.util.List;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
-public class DepartmentsPage extends Page {
+public class DepartmentsPage extends Page implements Searchable {
     private final DepartmentService service = new DepartmentService();
     private final DataTable<Department> table = new DataTable<Department>("No departments match",
             "Add a department or change the search.")
@@ -101,5 +102,18 @@ public class DepartmentsPage extends Page {
         kpiTotalDepts.setValue(totalDepts);
         kpiTotalStudents.setValue(totalStudents);
         kpiLargestDept.setValue(largest != null ? largest.code() + " (" + largest.studentCount() + ")" : "—");
+    }
+
+    @Override
+    public void setSearch(String text) {
+        if (search != null) {
+            search.setText(text == null ? "" : text);
+            refresh();
+        }
+    }
+
+    @Override
+    public String getSearch() {
+        return search == null ? "" : search.getText();
     }
 }

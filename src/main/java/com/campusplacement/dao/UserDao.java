@@ -58,7 +58,9 @@ public class UserDao {
             Jdbc.bind(ps, username, hash, role.name(), displayName);
             ps.executeUpdate();
             try (ResultSet keys = ps.getGeneratedKeys()) {
-                keys.next();
+                if (!keys.next()) {
+                    throw new SQLException("Failed to retrieve generated user ID for " + username);
+                }
                 return keys.getInt(1);
             }
         }

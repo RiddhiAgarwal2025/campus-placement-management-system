@@ -88,9 +88,16 @@ public class DepartmentBarChartCard extends JPanel {
     }
 
     public void updateData(String topPackage, int totalPlaced) {
+        updateData(topPackage, totalPlaced, null);
+    }
+
+    public void updateData(String topPackage, int totalPlaced, Map<String, int[]> dynamicDeptData) {
         if (topPackage != null && !topPackage.isBlank()) {
             kpiValue.setText(topPackage);
             kpiLabel.setText("Highest Package Offered \u2022 " + totalPlaced + " Placed");
+        }
+        if (dynamicDeptData != null && !dynamicDeptData.isEmpty()) {
+            chart.setDeptData(dynamicDeptData);
         }
         repaint();
     }
@@ -117,6 +124,12 @@ public class DepartmentBarChartCard extends JPanel {
         private final Map<String, int[]> deptData = new LinkedHashMap<>();
         private int hoveredIdx = -1;
         private Point mousePt = null;
+
+        void setDeptData(Map<String, int[]> data) {
+            deptData.clear();
+            deptData.putAll(data);
+            repaint();
+        }
 
         ChartCanvas() {
             setOpaque(false);

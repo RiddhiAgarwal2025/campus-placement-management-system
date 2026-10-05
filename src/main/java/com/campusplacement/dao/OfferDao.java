@@ -118,6 +118,17 @@ public class OfferDao {
         }
     }
 
+    public void rejectOtherPendingOffers(Connection c, String studentId, int acceptedOfferId) throws SQLException {
+        String sql = "UPDATE offers o JOIN applications a ON a.application_id = o.application_id "
+                + "SET o.status = 'REJECTED', o.responded_at = CURRENT_TIMESTAMP "
+                + "WHERE a.student_id = ? AND o.offer_id <> ? AND o.status = 'PENDING'";
+        try (PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, studentId);
+            ps.setInt(2, acceptedOfferId);
+            ps.executeUpdate();
+        }
+    }
+
     public void delete(Connection c, int offerId) throws SQLException {
         try (PreparedStatement ps = c.prepareStatement("DELETE FROM offers WHERE offer_id = ?")) {
             ps.setInt(1, offerId);

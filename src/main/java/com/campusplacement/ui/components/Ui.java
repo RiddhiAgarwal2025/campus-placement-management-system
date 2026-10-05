@@ -61,11 +61,9 @@ public final class Ui {
 
     public static HintField search(String hint) {
         HintField f = new HintField(hint);
-        style(f);
-        f.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Theme.BORDER),
-                BorderFactory.createEmptyBorder(6, 30, 6, 9)));
-        f.setPreferredSize(new Dimension(260, 34));
         f.setIconGlyph(Icons.Glyph.SEARCH);
+        style(f);
+        f.setPreferredSize(new Dimension(260, 34));
         return f;
     }
 
@@ -97,7 +95,11 @@ public final class Ui {
         f.setForeground(Theme.TEXT);
         f.setBackground(Theme.FIELD_BG);
         f.setCaretColor(Theme.TEXT);
-        f.setBorder(fieldBorder());
+        if (f instanceof HintField h && h.hasIcon()) {
+            h.updateBorder();
+        } else {
+            f.setBorder(fieldBorder());
+        }
         f.setPreferredSize(new Dimension(Math.max(f.getPreferredSize().width, 220), 34));
     }
 

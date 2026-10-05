@@ -32,6 +32,9 @@ public class StudentService {
     }
 
     public Student get(String studentId) {
+        if (!Session.isOfficer() && !Session.studentId().equals(studentId)) {
+            throw new ServiceException("Unauthorized: You cannot access records belonging to another student.");
+        }
         return Db.query(c -> dao.findById(c, studentId))
                 .orElseThrow(() -> new ServiceException("Student " + studentId + " was not found."));
     }
@@ -98,6 +101,9 @@ public class StudentService {
 
     // ---- academic records ----
     public List<AcademicRecord> records(String studentId) {
+        if (!Session.isOfficer() && !Session.studentId().equals(studentId)) {
+            throw new ServiceException("Unauthorized: You cannot view records belonging to another student.");
+        }
         return Db.query(c -> dao.records(c, studentId));
     }
 

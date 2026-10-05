@@ -1,13 +1,20 @@
 package com.campusplacement.ui;
 
+import com.campusplacement.model.Company;
+import com.campusplacement.model.Drive;
+import com.campusplacement.model.Student;
 import com.campusplacement.model.User;
 import com.campusplacement.service.AuthService;
+import com.campusplacement.service.CompanyService;
+import com.campusplacement.service.DriveService;
+import com.campusplacement.service.StudentService;
 import com.campusplacement.ui.components.Btn;
 import com.campusplacement.ui.components.Dialogs;
 import com.campusplacement.ui.components.HintField;
 import com.campusplacement.ui.components.Icons;
 import com.campusplacement.ui.components.Icons.Glyph;
 import com.campusplacement.ui.components.Page;
+import com.campusplacement.ui.components.Searchable;
 import com.campusplacement.ui.components.Theme;
 import com.campusplacement.ui.components.Ui;
 import com.campusplacement.ui.officer.ApplicationsPage;
@@ -51,7 +58,12 @@ import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.Timer;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 /** Application shell: top bar, role-specific sidebar navigation and a card-switched content area. */
 public class MainFrame extends JFrame {
@@ -73,9 +85,17 @@ public class MainFrame extends JFrame {
     private HintField topSearch;
     private final JPanel root = new JPanel(new BorderLayout());
     private final Runnable themeListener = this::onThemeChanged;
+    private final User currentUser;
+    private final StudentService studentService = new StudentService();
+    private final CompanyService companyService = new CompanyService();
+    private final DriveService driveService = new DriveService();
+    private Timer searchDebounce;
+    private boolean isSyncingSearch = false;
+    private JPopupMenu searchPopup;
 
     public MainFrame(User user) {
         super("Campus Placements");
+        this.currentUser = user;
         current = this;
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         boolean officer = user.role() == User.Role.OFFICER;
@@ -144,6 +164,9 @@ public class MainFrame extends JFrame {
         }
         if (name != null) name.setForeground(Theme.TEXT);
         if (roleLabel != null) roleLabel.setForeground(Theme.MUTED);
+        if (searchPopup != null) {
+            searchPopup.setVisible(false);
+        }
         if (topSearch != null) {
             Ui.style(topSearch);
             topSearch.repaint();
@@ -173,6 +196,12 @@ public class MainFrame extends JFrame {
         }
     }
 
+    public static void navigate(String key, String query) {
+        if (current != null) {
+            current.navigateToSearch(key, query);
+        }
+    }
+
     private JPanel topBar(User user) {
         JPanel b = new JPanel(new BorderLayout());
         b.setBackground(Theme.SURFACE);
@@ -192,15 +221,26 @@ public class MainFrame extends JFrame {
         // Center Pill Search Bar (inspired by Figma)
         JPanel centerWrap = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 12));
         centerWrap.setOpaque(false);
-        topSearch = Ui.search("Search students, companies, drives...");
-        Ui.style(topSearch);
-        topSearch.setPreferredSize(new Dimension(340, 34));
-        topSearch.addActionListener(e -> {
-            String q = topSearch.getText().trim();
-            if (!q.isEmpty()) {
-                navigate("applications");
+        topSearch = Ui.search(user.role() == User.Role.OFFICER
+                ? "Search students, companies, drives..."
+                : "Search drives, companies, jobs...");
+        topSearch.setPreferredSize(new Dimension(360, 34));
+
+        searchDebounce = new Timer(220, e -> onSearchTextChanged());
+        searchDebounce.setRepeats(false);
+
+        topSearch.getDocument().addDocumentListener(new DocumentListener() {
+            public void insertUpdate(DocumentEvent e) { scheduleSearch(); }
+            public void removeUpdate(DocumentEvent e) { scheduleSearch(); }
+            public void changedUpdate(DocumentEvent e) { scheduleSearch(); }
+            private void scheduleSearch() {
+                if (!isSyncingSearch) {
+                    searchDebounce.restart();
+                }
             }
         });
+
+        topSearch.addActionListener(e -> executeSearch(topSearch.getText().trim()));
         centerWrap.add(topSearch);
         b.add(centerWrap, BorderLayout.CENTER);
 
@@ -304,8 +344,195 @@ public class MainFrame extends JFrame {
         items.forEach((k, item) -> item.setActive(k.equals(key)));
         cards.show(content, key);
         page.refresh();
+
+        if (searchPopup != null) {
+            searchPopup.setVisible(false);
+        }
+
+        isSyncingSearch = true;
+        if (page instanceof Searchable s) {
+            topSearch.setText(s.getSearch());
+        } else {
+            topSearch.setText("");
+        }
+        isSyncingSearch = false;
+
         content.revalidate();
         content.repaint();
+    }
+
+    public void navigateToSearch(String key, String query) {
+        show(key);
+        Page page = pages.get(key);
+        if (page instanceof Searchable s) {
+            isSyncingSearch = true;
+            topSearch.setText(query);
+            isSyncingSearch = false;
+            s.setSearch(query);
+        }
+    }
+
+    private void onSearchTextChanged() {
+        if (isSyncingSearch) return;
+        String q = topSearch.getText().trim();
+        Page current = pages.get(currentKey);
+        if (current instanceof Searchable s) {
+            s.setSearch(q);
+            if (searchPopup != null) {
+                searchPopup.setVisible(false);
+            }
+        } else {
+            if (q.length() >= 2) {
+                showGlobalSearchPopup(q);
+            } else if (searchPopup != null) {
+                searchPopup.setVisible(false);
+            }
+        }
+    }
+
+    private void executeSearch(String q) {
+        if (searchPopup != null) {
+            searchPopup.setVisible(false);
+        }
+        if (q.isEmpty()) {
+            Page current = pages.get(currentKey);
+            if (current instanceof Searchable s) {
+                s.setSearch("");
+            }
+            return;
+        }
+
+        Page current = pages.get(currentKey);
+        if (current instanceof Searchable s) {
+            s.setSearch(q);
+            return;
+        }
+
+        if (currentUser.role() == User.Role.OFFICER) {
+            List<Company> companies = companyService.list(q);
+            if (!companies.isEmpty()) {
+                navigateToSearch("companies", q);
+                return;
+            }
+            List<Student> students = studentService.list(q, null, null);
+            if (!students.isEmpty()) {
+                navigateToSearch("students", q);
+                return;
+            }
+            List<Drive> drives = driveService.list(q, null, null);
+            if (!drives.isEmpty()) {
+                navigateToSearch("drives", q);
+                return;
+            }
+            navigateToSearch("students", q);
+        } else {
+            navigateToSearch("drives", q);
+        }
+    }
+
+    private void showGlobalSearchPopup(String q) {
+        if (!topSearch.isShowing() || !topSearch.hasFocus()) {
+            return;
+        }
+        if (searchPopup == null) {
+            searchPopup = new JPopupMenu();
+            searchPopup.setFocusable(false);
+        }
+        searchPopup.removeAll();
+        searchPopup.setBackground(Theme.SURFACE);
+        searchPopup.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Theme.BORDER),
+                BorderFactory.createEmptyBorder(6, 6, 6, 6)));
+
+        boolean hasResults = false;
+        boolean isOfficer = currentUser.role() == User.Role.OFFICER;
+
+        if (isOfficer) {
+            List<Student> students = studentService.list(q, null, null);
+            if (!students.isEmpty()) {
+                hasResults = true;
+                addPopupHeader("STUDENTS (" + students.size() + ")");
+                int limit = Math.min(students.size(), 3);
+                for (int i = 0; i < limit; i++) {
+                    Student s = students.get(i);
+                    addPopupItem(s.fullName() + " (" + s.studentId() + ") • " + s.deptCode(),
+                            Glyph.STUDENTS, () -> navigateToSearch("students", s.fullName()));
+                }
+            }
+
+            List<Company> companies = companyService.list(q);
+            if (!companies.isEmpty()) {
+                hasResults = true;
+                addPopupHeader("COMPANIES (" + companies.size() + ")");
+                int limit = Math.min(companies.size(), 3);
+                for (int i = 0; i < limit; i++) {
+                    Company c = companies.get(i);
+                    addPopupItem(c.name() + " • " + (c.industry() == null ? "Company" : c.industry()),
+                            Glyph.COMPANIES, () -> navigateToSearch("companies", c.name()));
+                }
+            }
+
+            List<Drive> drives = driveService.list(q, null, null);
+            if (!drives.isEmpty()) {
+                hasResults = true;
+                addPopupHeader("PLACEMENT DRIVES (" + drives.size() + ")");
+                int limit = Math.min(drives.size(), 3);
+                for (int i = 0; i < limit; i++) {
+                    Drive d = drives.get(i);
+                    addPopupItem(d.companyName() + " — " + d.position(),
+                            Glyph.DRIVES, () -> navigateToSearch("drives", d.companyName()));
+                }
+            }
+        } else {
+            List<Drive> drives = driveService.listForStudents(q);
+            if (!drives.isEmpty()) {
+                hasResults = true;
+                addPopupHeader("AVAILABLE DRIVES (" + drives.size() + ")");
+                int limit = Math.min(drives.size(), 4);
+                for (int i = 0; i < limit; i++) {
+                    Drive d = drives.get(i);
+                    addPopupItem(d.companyName() + " — " + d.position(),
+                            Glyph.DRIVES, () -> navigateToSearch("drives", d.companyName()));
+                }
+            }
+        }
+
+        if (!hasResults) {
+            JLabel empty = new JLabel("  No matching records for \"" + q + "\"");
+            empty.setFont(Theme.sans(12));
+            empty.setForeground(Theme.MUTED);
+            empty.setBorder(BorderFactory.createEmptyBorder(6, 8, 6, 8));
+            searchPopup.add(empty);
+        }
+
+        searchPopup.pack();
+        searchPopup.show(topSearch, 0, topSearch.getHeight() + 4);
+        topSearch.requestFocusInWindow();
+    }
+
+    private void addPopupHeader(String text) {
+        JLabel h = new JLabel(text);
+        h.setFont(Theme.sansBold(10));
+        h.setForeground(Theme.MUTED);
+        h.setBorder(BorderFactory.createEmptyBorder(6, 8, 3, 8));
+        searchPopup.add(h);
+    }
+
+    private void addPopupItem(String label, Glyph glyph, Runnable onSelect) {
+        JMenuItem item = new JMenuItem(label);
+        item.setFont(Theme.sans(12));
+        item.setForeground(Theme.TEXT);
+        item.setBackground(Theme.SURFACE);
+        item.setIcon(Icons.of(glyph, 14, Theme.PLUM));
+        item.setIconTextGap(8);
+        item.setBorder(BorderFactory.createEmptyBorder(5, 8, 5, 8));
+        item.addActionListener(e -> {
+            if (searchPopup != null) {
+                searchPopup.setVisible(false);
+            }
+            onSelect.run();
+        });
+        searchPopup.add(item);
     }
 
     @Override

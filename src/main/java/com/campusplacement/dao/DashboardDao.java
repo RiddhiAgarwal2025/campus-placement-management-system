@@ -35,7 +35,19 @@ public class DashboardDao {
                 + "(SELECT COUNT(*) FROM offers) AS offers, "
                 + "(SELECT COUNT(*) FROM offers WHERE status = 'ACCEPTED') AS accepted, "
                 + "(SELECT COUNT(DISTINCT a.student_id) FROM offers o JOIN applications a ON a.application_id = o.application_id "
-                + "  WHERE o.status = 'ACCEPTED') AS placed");
+                + "  WHERE o.status = 'ACCEPTED') AS placed, "
+                + "COALESCE((SELECT MAX(package_lpa) FROM offers), (SELECT MAX(package_lpa) FROM job_profiles), 0) AS max_package");
+    }
+
+    public Map<String, int[]> departmentPlacements(Connection c) throws SQLException {
+        Map<String, int[]> map = new java.util.LinkedHashMap<>();
+        String sql = "SELECT dept_code, total_students, students_placed FROM vw_department_placement ORDER BY total_students DESC LIMIT 5";
+        try (PreparedStatement ps = c.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                map.put(rs.getString("dept_code"), new int[]{rs.getInt("total_students"), rs.getInt("students_placed")});
+            }
+        }
+        return map;
     }
 
     public Map<String, Number> studentStats(Connection c, String studentId) throws SQLException {

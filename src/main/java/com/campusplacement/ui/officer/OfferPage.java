@@ -12,6 +12,7 @@ import com.campusplacement.ui.components.HintField;
 import com.campusplacement.ui.components.Icons.Glyph;
 import com.campusplacement.ui.components.KpiBanner;
 import com.campusplacement.ui.components.Page;
+import com.campusplacement.ui.components.Searchable;
 import com.campusplacement.ui.components.StatTile;
 import com.campusplacement.ui.components.Ui;
 import com.campusplacement.util.Formats;
@@ -29,7 +30,7 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
-public class OfferPage extends Page {
+public class OfferPage extends Page implements Searchable {
     private final OfferService service = new OfferService();
     private final DataTable<Offer> table = new DataTable<Offer>("No offers match", "Issue offers to SELECTED candidates.")
             .col("#", Offer::offerId, 40, Kind.NUMBER)
@@ -167,5 +168,18 @@ public class OfferPage extends Page {
         kpiHighest.setValue(maxPkg.compareTo(BigDecimal.ZERO) > 0 ? Formats.lpa(maxPkg) : "—");
 
         setSubtitle(rows.size() + " offer(s) issued. Process candidate responses and verify compensation terms.");
+    }
+
+    @Override
+    public void setSearch(String text) {
+        if (search != null) {
+            search.setText(text == null ? "" : text);
+            refresh();
+        }
+    }
+
+    @Override
+    public String getSearch() {
+        return search == null ? "" : search.getText();
     }
 }

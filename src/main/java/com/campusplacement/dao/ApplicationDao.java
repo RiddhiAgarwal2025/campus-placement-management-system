@@ -94,9 +94,29 @@ public class ApplicationDao {
             Jdbc.bind(ps, studentId, driveId);
             ps.executeUpdate();
             try (ResultSet k = ps.getGeneratedKeys()) {
-                k.next();
+                if (!k.next()) {
+                    throw new SQLException("Failed to obtain generated application ID");
+                }
                 return k.getInt(1);
             }
+        }
+    }
+
+    public List<Application> selectedWithoutOffers(Connection c) throws SQLException {
+        String sql = "SELECT a.* FROM vw_student_applications a "
+                + "LEFT JOIN offers o ON o.application_id = a.application_id "
+                + "WHERE a.status = 'SELECTED' AND o.offer_id IS NULL "
+                + "ORDER BY a.applied_at DESC";
+        try (PreparedStatement ps = c.prepareStatement(sql)) {
+            return list(ps);
+        }
+    }
+
+    public void withdrawPending(Connection c, String studentId) throws SQLException {
+        String sql = "UPDATE applications SET status = 'WITHDRAWN' WHERE student_id = ? AND status = 'APPLIED'";
+        try (PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, studentId);
+            ps.executeUpdate();
         }
     }
 

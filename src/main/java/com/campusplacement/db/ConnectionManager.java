@@ -1,23 +1,52 @@
 package com.campusplacement.db;
 
 import com.campusplacement.config.DatabaseConfig;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 
-/** Opens JDBC connections using the single configuration source. */
+/** Manages a high-performance JDBC connection pool using HikariCP. */
 public final class ConnectionManager {
-    static {
-        try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-        } catch (ClassNotFoundException ignored) {
-        }
-    }
+    private static volatile HikariDataSource dataSource;
 
     private ConnectionManager() { }
 
+    private static HikariDataSource getDataSource() {
+        if (dataSource == null) {
+            synchronized (ConnectionManager.class) {
+                if (dataSource == null) {
+                    DatabaseConfig cfg = DatabaseConfig.get();
+                    HikariConfig config = new HikariConfig();
+                    config.setJdbcUrl(cfg.url());
+                    config.setUsername(cfg.username());
+                    config.setPassword(cfg.password());
+                    config.setDriverClassName("com.mysql.cj.jdbc.Driver");
+                    config.setMaximumPoolSize(10);
+                    config.setMinimumIdle(2);
+                    config.setIdleTimeout(60000);
+                    config.setConnectionTimeout(10000);
+                    config.setPoolName("CampusPlacementPool");
+                    // Recommended MySQL performance properties
+                    config.addDataSourceProperty("cachePrepStmts", "true");
+                    config.addDataSourceProperty("prepStmtCacheSize", "250");
+                    config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
+                    config.addDataSourceProperty("useServerPrepStmts", "true");
+                    dataSource = new HikariDataSource(config);
+                }
+            }
+        }
+        return dataSource;
+    }
+
     public static Connection open() throws SQLException {
-        DatabaseConfig cfg = DatabaseConfig.get();
-        return DriverManager.getConnection(cfg.url(), cfg.username(), cfg.password());
+        return getDataSource().getConnection();
+    }
+
+    public static synchronized void shutdown() {
+        if (dataSource != null && !dataSource.isClosed()) {
+            dataSource.close();
+            dataSource = null;
+        }
     }
 }

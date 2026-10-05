@@ -85,8 +85,15 @@ public class OfferVelocityLineChartCard extends JPanel {
     }
 
     public void updateData(int apps, int offers) {
+        updateData(apps, offers, null, null, null);
+    }
+
+    public void updateData(int apps, int offers, String[] dates, int[] appTrend, int[] offerTrend) {
         headlineCount.setText(apps + " Submissions");
         headlineLabel.setText(offers + " offers extended to date");
+        if (dates != null && appTrend != null && offerTrend != null) {
+            canvas.setTrend(dates, appTrend, offerTrend);
+        }
         repaint();
     }
 
@@ -109,11 +116,20 @@ public class OfferVelocityLineChartCard extends JPanel {
 
     /** Dual Line Trend Chart Canvas with interactive hover tooltips */
     private static class LineCanvas extends JPanel {
-        private final String[] dates = {"24 Sep", "27 Sep", "01 Oct", "02 Oct", "03 Oct"};
-        private final int[] lineApps = {3, 7, 14, 20, 25};
-        private final int[] lineOffers = {0, 1, 3, 5, 6};
+        private String[] dates = {"24 Sep", "27 Sep", "01 Oct", "02 Oct", "03 Oct"};
+        private int[] lineApps = {3, 7, 14, 20, 25};
+        private int[] lineOffers = {0, 1, 3, 5, 6};
         private int hoveredNode = -1;
         private Point mousePt = null;
+
+        void setTrend(String[] d, int[] a, int[] o) {
+            if (d != null && a != null && o != null && d.length > 0 && d.length == a.length && d.length == o.length) {
+                this.dates = d;
+                this.lineApps = a;
+                this.lineOffers = o;
+                repaint();
+            }
+        }
 
         LineCanvas() {
             setOpaque(false);

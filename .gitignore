@@ -6,7 +6,13 @@ bin/
 .vscode/
 
 # Local database credentials
+db.properties
 src/main/resources/db.properties
+theme.properties
+
+# Local temporary images and dependencies
+/*.png
+lib/
 
 # OS files
 .DS_Store

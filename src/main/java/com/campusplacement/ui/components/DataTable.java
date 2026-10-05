@@ -205,7 +205,11 @@ public class DataTable<T> extends JPanel {
 
     public T selected() {
         int v = table.getSelectedRow();
-        return v < 0 ? null : rows.get(table.convertRowIndexToModel(v));
+        if (v < 0) {
+            return null;
+        }
+        int m = table.convertRowIndexToModel(v);
+        return (m >= 0 && m < rows.size()) ? rows.get(m) : null;
     }
 
     public JTable table() { return table; }

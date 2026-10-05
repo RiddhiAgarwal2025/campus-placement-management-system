@@ -77,7 +77,8 @@ public class TopCompaniesListCard extends JPanel {
         row.setBorder(BorderFactory.createEmptyBorder(6, 0, 6, 0));
 
         // Circular initial avatar
-        String initial = d.companyName().isEmpty() ? "C" : d.companyName().substring(0, 1).toUpperCase();
+        String cname = d.companyName();
+        String initial = (cname == null || cname.isBlank()) ? "C" : cname.substring(0, 1).toUpperCase();
         JPanel avatar = new JPanel() {
             @Override
             public Dimension getPreferredSize() { return new Dimension(34, 34); }

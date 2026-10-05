@@ -12,6 +12,7 @@ import com.campusplacement.ui.components.HintField;
 import com.campusplacement.ui.components.Icons.Glyph;
 import com.campusplacement.ui.components.KpiBanner;
 import com.campusplacement.ui.components.Page;
+import com.campusplacement.ui.components.Searchable;
 import com.campusplacement.ui.components.StatTile;
 import com.campusplacement.ui.components.Theme;
 import com.campusplacement.ui.components.Ui;
@@ -24,7 +25,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
-public class CompaniesPage extends Page {
+public class CompaniesPage extends Page implements Searchable {
     private final CompanyService service = new CompanyService();
     private final DataTable<Company> table = new DataTable<Company>("No companies match", "Add a recruiting company.")
             .col("Company", Company::name, 190)
@@ -176,5 +177,18 @@ public class CompaniesPage extends Page {
         if (keep == null || table.selected() == null) {
             showDetail(table.selected());
         }
+    }
+
+    @Override
+    public void setSearch(String text) {
+        if (search != null) {
+            search.setText(text == null ? "" : text);
+            refresh();
+        }
+    }
+
+    @Override
+    public String getSearch() {
+        return search == null ? "" : search.getText();
     }
 }

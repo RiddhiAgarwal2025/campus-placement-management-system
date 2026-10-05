@@ -134,15 +134,17 @@ public class StudentDashboardPage extends Page {
                         + Formats.lpa(o.packageLpa()) + ". Accept or reject it from My Offers.", "offers"});
             }
         }
+        List<Integer> openDriveIds = d.openDrives().stream().map(Drive::driveId).toList();
+        Map<Integer, EligibilityResult> evaluated = eligibility.checkStudentDrives(sid, openDriveIds);
         for (Drive dr : d.openDrives()) {
-            try {
-                EligibilityResult r = eligibility.check(sid, dr.driveId());
+            EligibilityResult r = evaluated.get(dr.driveId());
+            if (r != null) {
                 eligibleMap.put(dr.driveId(), r.eligible() ? "ELIGIBLE" : "NOT ELIGIBLE");
                 if (r.eligible() && dr.acceptingApplications() && !appliedDrives.contains(dr.driveId())) {
                     items.add(new String[] {"Apply to " + dr.companyName(), dr.position() + ". Deadline "
                             + Formats.date(dr.deadline()) + " (" + Formats.relative(dr.deadline()) + ").", "drives"});
                 }
-            } catch (ServiceException ignored) {
+            } else {
                 eligibleMap.put(dr.driveId(), "");
             }
         }

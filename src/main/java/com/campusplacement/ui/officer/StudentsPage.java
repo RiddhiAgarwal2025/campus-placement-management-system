@@ -13,6 +13,7 @@ import com.campusplacement.ui.components.HintField;
 import com.campusplacement.ui.components.Icons.Glyph;
 import com.campusplacement.ui.components.KpiBanner;
 import com.campusplacement.ui.components.Page;
+import com.campusplacement.ui.components.Searchable;
 import com.campusplacement.ui.components.StatTile;
 import com.campusplacement.ui.components.Ui;
 import java.awt.BorderLayout;
@@ -23,7 +24,7 @@ import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
-public class StudentsPage extends Page {
+public class StudentsPage extends Page implements Searchable {
     private final StudentService service = new StudentService();
     private final DepartmentService departments = new DepartmentService();
     private final DataTable<Student> table = new DataTable<Student>("No students match",
@@ -169,5 +170,18 @@ public class StudentsPage extends Page {
         kpiDepts.setValue(distinctDepts);
 
         setSubtitle(total + " student(s) shown. Double-click a row for academic records, skills, applications and offers.");
+    }
+
+    @Override
+    public void setSearch(String text) {
+        if (search != null) {
+            search.setText(text == null ? "" : text);
+            reloadTable();
+        }
+    }
+
+    @Override
+    public String getSearch() {
+        return search == null ? "" : search.getText();
     }
 }

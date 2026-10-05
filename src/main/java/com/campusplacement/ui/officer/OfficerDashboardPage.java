@@ -80,15 +80,18 @@ public class OfficerDashboardPage extends Page {
             return;
         }
 
-        int stud = d.stats().get("students").intValue();
-        int comp = d.stats().get("companies").intValue();
-        int act = d.stats().get("active_drives").intValue();
-        int apps = d.stats().get("applications").intValue();
-        int sh = d.stats().get("shortlisted").intValue();
-        int off = d.stats().get("offers").intValue();
-        int acc = d.stats().get("accepted").intValue();
+        int stud = d.stats().getInt("students");
+        int comp = d.stats().getInt("companies");
+        int act = d.stats().getInt("active_drives");
+        int apps = d.stats().getInt("applications");
+        int sh = d.stats().getInt("shortlisted");
+        int off = d.stats().getInt("offers");
+        int acc = d.stats().getInt("accepted");
 
-        barChart.updateData("\u20B9 14.50 LPA", acc);
+        Number maxPkg = d.stats().get("max_package");
+        String maxPkgStr = maxPkg.doubleValue() > 0 ? ("\u20B9 " + maxPkg + " LPA") : "\u20B9 0.00 LPA";
+
+        barChart.updateData(maxPkgStr, acc, d.deptPlacements());
         donutChart.updateData(apps, sh, off, acc);
         companiesCard.updateDrives(d.upcoming());
         lineChart.updateData(apps, off);

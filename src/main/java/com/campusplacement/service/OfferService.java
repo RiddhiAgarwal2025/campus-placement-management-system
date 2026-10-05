@@ -27,17 +27,16 @@ public class OfferService {
     }
 
     public List<Offer> forStudent(String studentId) {
+        if (!Session.isOfficer() && !Session.studentId().equals(studentId)) {
+            throw new ServiceException("Unauthorized: You cannot view offers belonging to another student.");
+        }
         return Db.query(c -> dao.byStudent(c, studentId));
     }
 
     /** SELECTED applications that do not yet hold an offer. */
     public List<Application> candidatesForOffer() {
         Session.requireOfficer();
-        return Db.query(c -> {
-            Set<Integer> withOffer = dao.find(c, "", null).stream().map(Offer::applicationId).collect(Collectors.toSet());
-            return applications.find(c, "", null, null, null, "SELECTED").stream()
-                    .filter(a -> !withOffer.contains(a.applicationId())).toList();
-        });
+        return Db.query(applications::selectedWithoutOffers);
     }
 
     public void issue(int applicationId, String pkg, String offerDate, String joiningDate) {
@@ -105,6 +104,10 @@ public class OfferService {
                 throw new ServiceException("You have already accepted another offer. Only one offer can be accepted.");
             }
             dao.respond(c, offerId, accept ? "ACCEPTED" : "REJECTED");
+            if (accept) {
+                applications.withdrawPending(c, sid);
+                dao.rejectOtherPendingOffers(c, sid, offerId);
+            }
         });
     }
 }

@@ -16,6 +16,7 @@ import com.campusplacement.ui.components.HintField;
 import com.campusplacement.ui.components.Icons.Glyph;
 import com.campusplacement.ui.components.KpiBanner;
 import com.campusplacement.ui.components.Page;
+import com.campusplacement.ui.components.Searchable;
 import com.campusplacement.ui.components.StatTile;
 import com.campusplacement.ui.components.Ui;
 import java.awt.BorderLayout;
@@ -27,7 +28,7 @@ import java.util.stream.Collectors;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
 
-public class ApplicationsPage extends Page {
+public class ApplicationsPage extends Page implements Searchable {
     private final ApplicationService service = new ApplicationService();
     private final DataTable<Application> table = new DataTable<Application>("No applications match",
             "Adjust the filters, or wait for students to apply.")
@@ -162,5 +163,18 @@ public class ApplicationsPage extends Page {
         kpiSelect.setValue(counts.getOrDefault("SELECTED", 0L));
         kpiReject.setValue(counts.getOrDefault("REJECTED", 0L));
         setSubtitle("Showing " + rows.size() + " active candidate records filtered across drives.");
+    }
+
+    @Override
+    public void setSearch(String text) {
+        if (search != null) {
+            search.setText(text == null ? "" : text);
+            reloadTable();
+        }
+    }
+
+    @Override
+    public String getSearch() {
+        return search == null ? "" : search.getText();
     }
 }

@@ -6,14 +6,16 @@ import com.campusplacement.ui.components.DataTable;
 import com.campusplacement.ui.components.DataTable.Kind;
 import com.campusplacement.ui.components.KpiBanner;
 import com.campusplacement.ui.components.Page;
+import com.campusplacement.ui.components.Searchable;
 import com.campusplacement.ui.components.StatTile;
 import com.campusplacement.ui.components.Ui;
 import java.awt.BorderLayout;
 import java.util.List;
 import javax.swing.JPanel;
 
-public class SelectionStatusPage extends Page {
+public class SelectionStatusPage extends Page implements Searchable {
     private final SelectionService service = new SelectionService();
+    private String filterQuery = "";
     private final DataTable<StudentRoundStatus> table = new DataTable<StudentRoundStatus>("No selection rounds yet",
             "Rounds appear here once the placement office schedules them for drives you applied to.")
             .col("Company", StudentRoundStatus::companyName, 170)
@@ -42,7 +44,12 @@ public class SelectionStatusPage extends Page {
 
     @Override
     public void refresh() {
-        List<StudentRoundStatus> rows = load(service::myRounds, List.of());
+        List<StudentRoundStatus> all = load(service::myRounds, List.of());
+        List<StudentRoundStatus> rows = filterQuery.isEmpty() ? all : all.stream().filter(r ->
+                (r.companyName() != null && r.companyName().toLowerCase().contains(filterQuery)) ||
+                (r.position() != null && r.position().toLowerCase().contains(filterQuery)) ||
+                (r.roundName() != null && r.roundName().toLowerCase().contains(filterQuery)) ||
+                (r.result() != null && r.result().toLowerCase().contains(filterQuery))).toList();
         table.setRows(rows);
 
         long passed = rows.stream().filter(r -> "PASS".equals(r.result())).count();
@@ -51,6 +58,17 @@ public class SelectionStatusPage extends Page {
         kpiTotalRounds.setValue(rows.size());
         kpiPassed.setValue(passed);
         kpiAwaiting.setValue(awaiting);
+    }
+
+    @Override
+    public void setSearch(String text) {
+        this.filterQuery = text == null ? "" : text.trim().toLowerCase();
+        refresh();
+    }
+
+    @Override
+    public String getSearch() {
+        return filterQuery;
     }
 }
 

@@ -15,6 +15,7 @@ import com.campusplacement.ui.components.HintField;
 import com.campusplacement.ui.components.Icons.Glyph;
 import com.campusplacement.ui.components.KpiBanner;
 import com.campusplacement.ui.components.Page;
+import com.campusplacement.ui.components.Searchable;
 import com.campusplacement.ui.components.StatTile;
 import com.campusplacement.ui.components.Ui;
 import com.campusplacement.util.Formats;
@@ -28,7 +29,7 @@ import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
-public class JobProfilesPage extends Page {
+public class JobProfilesPage extends Page implements Searchable {
     private final CompanyService service = new CompanyService();
     private final DataTable<JobProfile> table = jobTable();
     private final StatTile kpiTotalJobs = new StatTile("Job Profiles", "Available career profiles", false);
@@ -152,5 +153,18 @@ public class JobProfilesPage extends Page {
         kpiTotalJobs.setValue(count);
         kpiAvgPkg.setValue(avg > 0 ? String.format("\u20B9 %.2f LPA", avg) : "—");
         kpiMaxPkg.setValue(max.compareTo(BigDecimal.ZERO) > 0 ? Formats.lpa(max) : "—");
+    }
+
+    @Override
+    public void setSearch(String text) {
+        if (search != null) {
+            search.setText(text == null ? "" : text);
+            reloadTable();
+        }
+    }
+
+    @Override
+    public String getSearch() {
+        return search == null ? "" : search.getText();
     }
 }

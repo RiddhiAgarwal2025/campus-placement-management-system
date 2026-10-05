@@ -30,6 +30,9 @@ public class ApplicationService {
     }
 
     public List<Application> forStudent(String studentId) {
+        if (!Session.isOfficer() && !Session.studentId().equals(studentId)) {
+            throw new ServiceException("Unauthorized: You cannot view applications belonging to another student.");
+        }
         return Db.query(c -> dao.byStudent(c, studentId));
     }
 

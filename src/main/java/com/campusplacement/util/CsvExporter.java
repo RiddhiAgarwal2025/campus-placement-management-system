@@ -28,7 +28,15 @@ public final class CsvExporter {
     }
 
     private static String escape(String s) {
-        if (s.contains(",") || s.contains("\"") || s.contains("\n")) {
+        if (s == null) {
+            return "";
+        }
+        // Neutralize formula injection / spreadsheet DDE execution (CWE-1236)
+        if (s.startsWith("=") || s.startsWith("+") || s.startsWith("-") || s.startsWith("@")
+                || s.startsWith("\t") || s.startsWith("\r")) {
+            s = "'" + s;
+        }
+        if (s.contains(",") || s.contains("\"") || s.contains("\n") || s.contains("\r")) {
             return "\"" + s.replace("\"", "\"\"") + "\"";
         }
         return s;
