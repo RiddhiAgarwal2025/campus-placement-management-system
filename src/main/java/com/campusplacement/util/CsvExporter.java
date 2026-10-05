@@ -27,13 +27,18 @@ public final class CsvExporter {
         }
     }
 
+    private static final java.util.regex.Pattern NUMERIC_LITERAL =
+            java.util.regex.Pattern.compile("^[+-]?\\d+(\\.\\d+)?([eE][+-]?\\d+)?$");
+
     private static String escape(String s) {
         if (s == null) {
             return "";
         }
         // Neutralize formula injection / spreadsheet DDE execution (CWE-1236)
-        if (s.startsWith("=") || s.startsWith("+") || s.startsWith("-") || s.startsWith("@")
-                || s.startsWith("\t") || s.startsWith("\r")) {
+        // Values starting with '-' or '+' are safe if they represent genuine numeric literals
+        boolean isFormulaPrefix = (s.startsWith("=") || s.startsWith("@") || s.startsWith("\t") || s.startsWith("\r"))
+                || ((s.startsWith("+") || s.startsWith("-")) && !NUMERIC_LITERAL.matcher(s.trim()).matches());
+        if (isFormulaPrefix) {
             s = "'" + s;
         }
         if (s.contains(",") || s.contains("\"") || s.contains("\n") || s.contains("\r")) {

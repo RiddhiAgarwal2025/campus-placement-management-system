@@ -1,0 +1,27 @@
+# ==============================================================================
+# Campus Placement Management System - Database Configuration Example
+# ==============================================================================
+# Instructions:
+# 1. Copy this file to 'db.properties' (in the project root or src/main/resources/):
+#    copy db.properties.example db.properties
+# 2. Update the credentials below to match your MySQL database setup.
+# ==============================================================================
+
+# JDBC Connection URL
+# Note: serverTimezone can be set to UTC or your local server timezone.
+db.url=jdbc:mysql://localhost:3306/campus_placement?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+
+# Database Username
+# For development/admin setup, you can use 'root'.
+# For secure/production deployment, use the least-privilege user created by
+# database/08_least_privilege_user.sql (username: placement_app).
+db.username=root
+
+# Database Password
+db.password=root
+
+# Environment Variable Overrides:
+# You can also override these settings at runtime via environment variables:
+#   DB_URL
+#   DB_USER (or DB_USERNAME)
+#   DB_PASSWORD

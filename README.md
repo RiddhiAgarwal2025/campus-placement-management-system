@@ -1,56 +1,50 @@
 # Campus Placement and Recruitment Drive Management System
 
-A desktop application for a university placement office, built with **Java 17, Swing, JDBC, MySQL 8 and Maven**.
+A production-grade desktop management application for university placement cells, built with **Java 17/21, Swing, JDBC, HikariCP, MySQL 8 and Maven**.
 
 ```
-Swing UI  →  Service (business rules, transactions)  →  DAO  →  JDBC  →  MySQL Server
+Swing UI  →  Service Layer (RBAC, transactions)  →  DAO  →  HikariCP / JDBC  →  MySQL Server
 ```
 
-> **XAMPP is NOT required.** The app does not use XAMPP, Apache, phpMyAdmin, Tomcat or any web server.
-> The only thing it needs at runtime is a normal **MySQL Server** installation.
+> **XAMPP is NOT required.** The app does not rely on Apache, phpMyAdmin, Tomcat, or web servers. The only runtime requirement is a standard **MySQL Server** installation.
 
 ---
 
-## 1. Requirements
+## 1. System Requirements
 
 | Software | Version | Purpose |
 |---|---|---|
-| Java JDK | 17 or newer (compiled for 17, tested on 21) | Build and run the app |
-| Apache Maven | 3.8 or newer | Build the project (downloads the MySQL JDBC driver) |
-| MySQL Server | 8.0 or newer | Database |
-| Internet connection | first build only | Maven downloads its plugins and `mysql-connector-j` |
+| Java JDK | 17 or newer (tested on 17, 21, and 26) | Application runtime and compilation |
+| Apache Maven | 3.8 or newer | Dependency resolution and automated packaging |
+| MySQL Server | 8.0 or newer | Relational database persistence |
+| Internet connection | First build only | Maven dependency download (`mysql-connector-j`, HikariCP, etc.) |
 
 ---
 
-## 2. Install Java
+## 2. Java & Maven Installation
 
-- **Windows / macOS:** install a JDK 17+ (for example Eclipse Temurin from https://adoptium.net). On Windows, tick
-  "Set JAVA_HOME" and "Add to PATH" during installation.
-- **Ubuntu / Debian:** `sudo apt install openjdk-17-jdk`
+- **Windows / macOS:** Install JDK 17+ (e.g. [Eclipse Temurin](https://adoptium.net)). On Windows, check "Set JAVA_HOME" and "Add to PATH".
+- **Ubuntu / Debian:** `sudo apt install openjdk-17-jdk maven`
 
-Check it:
+Verify your installation:
 
 ```bash
 java -version
 javac -version
+mvn -v
 ```
 
-Both must report version 17 or higher.
-
-Install Maven from https://maven.apache.org/download.cgi (unzip it and add its `bin` folder to `PATH`), or with
-`sudo apt install maven` / `brew install maven`. Check with `mvn -v`.
+All commands should report Java 17 or higher.
 
 ---
 
-## 3. Install MySQL Server
+## 3. MySQL Server Setup
 
-- **Windows:** download *MySQL Installer* from https://dev.mysql.com/downloads/installer/ and install
-  **MySQL Server 8.x** (MySQL Workbench is optional but handy). Choose a root password during setup and remember it.
-  The installer registers MySQL as a Windows service that starts automatically.
-- **macOS:** `brew install mysql` then `brew services start mysql`, or use the DMG from https://dev.mysql.com/downloads/mysql/.
-- **Ubuntu / Debian:** `sudo apt install mysql-server` then `sudo systemctl start mysql`.
+- **Windows:** Download MySQL Installer from [dev.mysql.com](https://dev.mysql.com/downloads/installer/) and install MySQL Server 8.x.
+- **macOS:** `brew install mysql && brew services start mysql`
+- **Ubuntu / Debian:** `sudo apt install mysql-server && sudo systemctl start mysql`
 
-Check the server is running:
+Verify MySQL is running:
 
 ```bash
 mysql -u root -p -e "SELECT VERSION();"
@@ -58,54 +52,55 @@ mysql -u root -p -e "SELECT VERSION();"
 
 ---
 
-## 4. Create the database
+## 4. Database Setup & Initialization
 
-Everything (database, tables, constraints, indexes, sample data, views, triggers and procedures) is created by one script:
-`database/complete_database.sql`. It drops and recreates the `campus_placement` database, so it can be re-run any time
-to reset the data.
+Everything (schema, tables, constraints, indexes, sample data, views, triggers, stored procedures, and least-privilege user creation) is packaged in `database/complete_database.sql`.
 
-## 5. Run the SQL script
+Run the script from the project root using one of the following methods:
 
-From the project folder, choose **one** of these:
-
-**Command line (all platforms)**
-
+**Command Line (All Platforms):**
 ```bash
 mysql -u root -p < database/complete_database.sql
 ```
 
-On Windows Command Prompt, if `mysql` is not on the PATH, use the full path, for example:
-
+**Windows Command Prompt:**
 ```bat
 "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -u root -p < database\complete_database.sql
 ```
 
-(In PowerShell use: `Get-Content database\complete_database.sql | & "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -u root -p`)
+**PowerShell:**
+```powershell
+Get-Content database\complete_database.sql | & "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -u root -p
+```
 
-**MySQL Workbench**
+**MySQL Workbench:**
+1. Connect to your MySQL server.
+2. Open `database/complete_database.sql`.
+3. Click the lightning-bolt (**Execute**) icon.
 
-1. Connect to your local server.
-2. *File → Open SQL Script…* → choose `database/complete_database.sql`.
-3. Click the lightning-bolt (Execute) button.
-
-**Verify**
-
+### Verification
 ```bash
 mysql -u root -p -e "USE campus_placement; SELECT COUNT(*) AS students FROM students; SHOW TRIGGERS;"
 ```
-
-You should see 24 students and 9 triggers.
-
-The numbered scripts `01_…` to `06_…` contain the same content split by topic (database, tables, constraints and indexes,
-sample data, views, procedures and triggers). `07_reports.sql` contains the 16 report queries; it only reads data.
-
-> Sample-data dates are relative to the day you run the script (`CURDATE()`), so the "open" drives are always open.
+You should see 24 sample students and 9 integrity triggers.
 
 ---
 
-## 6. Configure `db.properties`
+## 5. Database Configuration (`db.properties`)
 
-Edit `src/main/resources/db.properties` **before building**:
+On a clean clone, copy the configuration template `db.properties.example` to `db.properties`:
+
+**Windows:**
+```bat
+copy db.properties.example db.properties
+```
+
+**Linux / macOS:**
+```bash
+cp db.properties.example db.properties
+```
+
+Edit `db.properties` with your MySQL credentials:
 
 ```properties
 db.url=jdbc:mysql://localhost:3306/campus_placement?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
@@ -113,129 +108,101 @@ db.username=root
 db.password=YOUR_MYSQL_PASSWORD
 ```
 
-Usually only `db.password` (and maybe `db.username`) need changing. If MySQL listens on another port, change `3306`.
+### Least-Privilege Application User (Recommended)
+For secure multi-client deployment, run `database/08_least_privilege_user.sql` and connect using the limited application account:
+```properties
+db.username=placement_app
+db.password=Placement@123
+```
+This user is restricted to `SELECT`, `INSERT`, `UPDATE`, `DELETE`, and `EXECUTE` on `campus_placement.*` and cannot drop tables or alter schema definitions.
 
-You can also change the settings **without rebuilding**: put a `db.properties` file next to where you run the JAR
-(the current working directory). If that file exists it overrides the bundled one.
-
-Credentials appear nowhere else in the source code.
+*Note: Environment variables (`DB_URL`, `DB_USER`, `DB_PASSWORD`) can also be used to override settings dynamically.*
 
 ---
 
-## 7. Build with Maven
+## 6. Build & Automated Tests
 
+### Run Automated Unit and Integration Tests
+```bash
+mvn test
+```
+The test suite includes 36+ automated tests verifying:
+- PBKDF2-HMAC-SHA256 password hashing and dummy hash verification
+- Field validators (email, phone, CGPA, dates)
+- CSV formula injection protection (CWE-1236) while preserving valid negative numbers
+- Role-based authorization & BOLA defenses (`StudentService`, `EligibilityService`, `SelectionService`, `ApplicationService`, `OfferService`)
+- Search filtering across all data entities
+
+### Package Runnable JAR
 ```bash
 mvn clean package
 ```
+This produces `target/campus-placement.jar`, a shaded executable containing all dependencies and JDBC drivers.
 
-This produces `target/campus-placement.jar`, a single runnable JAR that already contains the MySQL JDBC driver.
+---
 
-## 8. Run the application
+## 7. Running the Application
 
+### Option A: Portable Launchers
+- **Windows:** Double-click `run.bat` or run:
+  ```bat
+  run.bat
+  ```
+- **Linux / macOS:**
+  ```bash
+  chmod +x run.sh
+  ./run.sh
+  ```
+
+### Option B: Direct Java Command
 ```bash
 java -jar target/campus-placement.jar
 ```
 
-or, during development, `mvn exec:java`.
-
-On the sign-in screen, **Test database connection** confirms that the app can reach MySQL and shows which
-`db.properties` it used.
+On the sign-in screen, click **Test database connection** to confirm connectivity to your MySQL instance.
 
 ---
 
-## 9. Sample login credentials
+## 8. Sample Credentials
 
-| Role | Username | Password |
-|---|---|---|
-| Placement officer | `officer` | `Officer@123` |
-| Placement officer | `tpo.assistant` | `Officer@123` |
-| Student | any student ID, e.g. `21CSE001`, `21CSE003`, `21IT001`, `21ECE003` | `Student@123` |
+| Role | Username | Password | Notes |
+|---|---|---|---|
+| Placement Officer | `officer` | `Officer@123` | Full placement management access |
+| Placement Officer | `tpo.assistant` | `Officer@123` | Secondary officer account |
+| Student | `21CSE001` | `Student@123` | Placed (accepted Northwind offer) |
+| Student | `21CSE003` | `Student@123` | Has pending offer from Meridian Analytics |
+| Student | `21ECE003` | `Student@123` | Has pending offer from Helix Semiconductors |
+| Student | `21IT001` | `Student@123` | Shortlisted in Kestrel Systems |
+| Student | Any Student ID | `Student@123` | Default student password |
 
-Students added by the officer get a login automatically: username = student ID, password = `Student@123`.
-Students can change their password from **My Profile**. Passwords are stored as salted PBKDF2-HMAC-SHA256 hashes.
-
-Useful sample students:
-
-| Student | Why it is interesting |
-|---|---|
-| `21CSE001` Ananya Rao | Placed (accepted Northwind offer) |
-| `21CSE003` Priya Sharma | Has a **pending** offer to accept or reject; CGPA 7.64 shows ineligibility reasons |
-| `21ECE003` Siddharth Rao | Pending offer from Helix Semiconductors |
-| `21IT001` Meera Joshi | Shortlisted in Kestrel (round 2 passed), applied to Aurelia |
-| `21IT004` Rohan Gupta | Shortlisted, waiting for round 2 |
-| `21CSE002` Rahul Mehta | Eligible for the open Aurelia drive but has not applied yet |
+> **Security Note:** Default accounts are prompted to update passwords on initial login. New passwords can also be configured under **My Profile**. Account lockout activates after 5 consecutive failed login attempts.
 
 ---
 
-## 10. Complete test workflow
+## 9. Key Features & Architecture
 
-1. **Officer** (`officer`) → **Dashboard**: counts come from live SQL queries.
-2. **Students → Add student** (e.g. ID `24CSE099`, CSE, batch 2027, CGPA 8.2, 0 backlogs).
-   Select the row → **Details** → *Academic records → Add record*; *Skills → Assign skill* (JavaScript).
-3. **Companies → Add company**, then **Add job profile** for it.
-4. **Drives → New drive**: pick the job profile, status `OPEN`, deadline in the future, criteria
-   (min CGPA 7, max backlogs 1, batch 2027, department CSE, skill JavaScript).
-5. Select the drive → **Check eligibility** → the new student appears as **ELIGIBLE**; others show reasons.
-6. **Logout** → sign in as `24CSE099` / `Student@123` → **My Profile** shows records and skills.
-7. **Placement Drives** → select the drive → **Check eligibility** → **Apply**. **My Applications** shows `APPLIED`.
-8. **Logout** → officer → **Applications** (filter by drive) shows the application.
-9. **Selection** → choose the drive → **Add round** (e.g. 1 Aptitude Test, 2 HR Interview).
-   Select round 1 → select the candidate → **Mark PASS** (status becomes `SHORTLISTED`); round 2 → **Mark PASS** (`SELECTED`).
-   Trying round 2 before round 1 is refused.
-10. **Offers → Issue offer** → choose the candidate → set package and dates.
-11. **Logout** → student → **My Offers** → **Accept offer**.
-12. **Logout** → officer → **Dashboard** and **Reports** (Accepted offers, Department placement,
-    Overall placement statistics) include the new placement. Use **Export CSV** to save any report.
-
-Detailed test cases with expected messages are in `docs/Test_Cases.md`.
+- **Role-Based Access Control (RBAC):** Officer (12 management views) and Student (6 self-service views) interfaces backed by service-layer access checks.
+- **Eligibility Engine:** Evaluates minimum CGPA, backlog thresholds, eligible departments, graduation year, and required student skills.
+- **Transactional Application Flow:** Application submission, withdrawal, and offer responses run in atomic JDBC transactions (`REPEATABLE READ`).
+- **Ordered Selection Rounds:** Selection rounds enforce strict sequence progression (both in service logic and via database triggers).
+- **Offer Lifecycle:** Strict constraints prevent multiple offer acceptances and ensure offers can only be issued to shortlisted/selected candidates.
+- **Reporting & Export:** 16 SQL analytics reports with sanitized CSV export (formula injection defended).
 
 ---
 
-## 11. Troubleshooting
+## 10. Troubleshooting
 
 | Problem | Fix |
 |---|---|
-| "Cannot connect to the MySQL server…" | Start MySQL (Windows: *Services → MySQL80 → Start*; Linux: `sudo systemctl start mysql`; macOS: `brew services start mysql`). Check host/port in `db.url`. |
-| "MySQL rejected the username or password in db.properties." | Fix `db.username` / `db.password`, rebuild, or place an edited `db.properties` next to where you run the JAR. |
-| "The campus_placement database does not exist…" | Run `database/complete_database.sql` (step 5). |
-| "A required table is missing." | Re-run `complete_database.sql`. |
-| `Public Key Retrieval is not allowed` | Keep `allowPublicKeyRetrieval=true` in `db.url` (already in the default). |
-| `mvn` not found / wrong Java version | Install Maven and JDK 17+, and make sure `mvn -v` shows Java 17 or newer. |
-| Maven cannot download dependencies | The first build needs internet access to Maven Central. Behind a proxy, configure `~/.m2/settings.xml`. |
-| Error 1419 (SUPER privilege / binary logging) while running the script as a non-root user | Run the script as `root`, or run `SET GLOBAL log_bin_trust_function_creators = 1;` as root first. |
-| Script fails in a GUI tool at `DELIMITER` | Use the `mysql` command line or MySQL Workbench; both support `DELIMITER`. |
-| Open drives show as closed | The sample dates are relative to the day the script ran; re-run `complete_database.sql` to refresh them. |
-| "No suitable driver" | Run the shaded JAR from `target/campus-placement.jar` (it bundles the driver), not the compiled classes alone. |
+| "Cannot connect to the MySQL server…" | Ensure MySQL is running. Verify `db.url` in `db.properties`. |
+| "MySQL rejected the username or password in db.properties." | Verify credentials in `db.properties` or environment variables. |
+| "Database configuration file 'db.properties' was not found" | Copy `db.properties.example` to `db.properties`. |
+| "The campus_placement database does not exist" | Run `database/complete_database.sql` to initialize the database. |
+| `Public Key Retrieval is not allowed` | Ensure `allowPublicKeyRetrieval=true` is present in `db.url`. |
+| Account temporarily locked | Wait 15 minutes or contact placement administrator to reset failed attempt counter. |
 
 ---
 
-## Project structure
+## License
 
-```
-CampusPlacement/
-├── pom.xml
-├── README.md
-├── database/            01–07 SQL scripts and complete_database.sql
-├── docs/                ER diagram, relational schema, 3NF, FDs, data dictionary, business rules, test cases
-└── src/main/
-    ├── java/com/campusplacement/
-    │   ├── Main.java
-    │   ├── config/      DatabaseConfig (reads db.properties)
-    │   ├── db/          ConnectionManager, Db (query + transaction helper)
-    │   ├── model/       Java records for all entities
-    │   ├── dao/         JDBC data access with prepared statements
-    │   ├── service/     Business rules, eligibility engine, transactions, session
-    │   ├── ui/          LoginFrame, MainFrame, components/, officer/, student/
-    │   └── util/        Password hashing, validation, formatting, error translation, CSV
-    └── resources/       db.properties, reports.sql
-```
-
-## Features
-
-- Two roles with separate navigation: placement officer (12 screens) and student (6 screens).
-- CRUD for students, academic records, skills (and assignment), departments, companies, job profiles and drives.
-- One eligibility engine used for officer checks, student checks and application submission, with reasons for every failed criterion.
-- Application submission in a single JDBC transaction (drive lock, status, deadline, eligibility, duplicate check, insert).
-- Ordered selection rounds with PASS/FAIL results; round order is enforced in Java and by triggers; application status follows results.
-- Offers only for selected candidates, one per application; students accept or reject inside a transaction, and can accept only one offer.
-- Dashboards, 16 SQL reports with CSV export, sortable tables, search and filters, and friendly error messages.
+This project is open source and available under the [MIT License](LICENSE).

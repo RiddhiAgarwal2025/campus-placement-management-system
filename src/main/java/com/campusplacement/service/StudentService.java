@@ -24,10 +24,12 @@ public class StudentService {
                               String graduationYear, String cgpa, String backlogs) { }
 
     public List<Student> list(String search, Integer deptId, Integer gradYear) {
+        Session.requireOfficer();
         return Db.query(c -> dao.findAll(c, search, deptId, gradYear));
     }
 
     public List<Integer> graduationYears() {
+        Session.requireOfficer();
         return Db.query(dao::graduationYears);
     }
 

@@ -36,23 +36,57 @@ public final class DatabaseConfig {
         Properties p = new Properties();
         String source;
         Path external = Path.of("db.properties");
+        Path resExternal = Path.of("src", "main", "resources", "db.properties");
+        Path exampleExternal = Path.of("db.properties.example");
+        Path resExample = Path.of("src", "main", "resources", "db.properties.example");
+
         try {
             if (Files.isRegularFile(external)) {
                 try (InputStream in = Files.newInputStream(external)) {
                     p.load(in);
                 }
                 source = external.toAbsolutePath().toString();
-            } else {
-                try (InputStream in = DatabaseConfig.class.getResourceAsStream("/db.properties")) {
-                    if (in == null) {
-                        throw new IllegalStateException("db.properties was not found on the classpath.");
-                    }
+            } else if (Files.isRegularFile(resExternal)) {
+                try (InputStream in = Files.newInputStream(resExternal)) {
                     p.load(in);
                 }
-                source = "bundled db.properties";
+                source = resExternal.toAbsolutePath().toString();
+            } else {
+                InputStream cpIn = DatabaseConfig.class.getResourceAsStream("/db.properties");
+                if (cpIn != null) {
+                    try (cpIn) {
+                        p.load(cpIn);
+                    }
+                    source = "bundled db.properties";
+                } else if (Files.isRegularFile(exampleExternal)) {
+                    try (InputStream in = Files.newInputStream(exampleExternal)) {
+                        p.load(in);
+                    }
+                    source = exampleExternal.toAbsolutePath().toString() + " (fallback template)";
+                } else if (Files.isRegularFile(resExample)) {
+                    try (InputStream in = Files.newInputStream(resExample)) {
+                        p.load(in);
+                    }
+                    source = resExample.toAbsolutePath().toString() + " (fallback template)";
+                } else {
+                    InputStream exIn = DatabaseConfig.class.getResourceAsStream("/db.properties.example");
+                    if (exIn != null) {
+                        try (exIn) {
+                            p.load(exIn);
+                        }
+                        source = "bundled db.properties.example (fallback template)";
+                    } else if (System.getenv("DB_URL") != null || System.getenv("DB_USER") != null) {
+                        source = "environment variables";
+                    } else {
+                        throw new IllegalStateException(
+                                "Database configuration file 'db.properties' was not found.\n"
+                                + "Please copy 'db.properties.example' to 'db.properties' (or 'src/main/resources/db.properties') "
+                                + "and verify your MySQL connection credentials.");
+                    }
+                }
             }
         } catch (IOException e) {
-            throw new IllegalStateException("Could not read db.properties: " + e.getMessage(), e);
+            throw new IllegalStateException("Could not read database configuration: " + e.getMessage(), e);
         }
 
         String envUrl = System.getenv("DB_URL");

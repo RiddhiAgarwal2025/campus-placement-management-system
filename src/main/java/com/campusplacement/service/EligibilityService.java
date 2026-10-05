@@ -60,6 +60,9 @@ public class EligibilityService {
 
     /** Evaluates one student for one drive using the given connection (used inside the application transaction). */
     public EligibilityResult check(Connection c, String studentId, int driveId) throws SQLException {
+        if (!Session.isOfficer() && !Session.studentId().equals(studentId)) {
+            throw new ServiceException("Unauthorized: You cannot check eligibility for another student.");
+        }
         Student s = students.findById(c, studentId)
                 .orElseThrow(() -> new ServiceException("Student " + studentId + " was not found."));
         Set<Integer> ids = skills.studentSkills(c, studentId).stream().map(StudentSkill::skillId).collect(Collectors.toSet());
@@ -67,11 +70,17 @@ public class EligibilityService {
     }
 
     public EligibilityResult check(String studentId, int driveId) {
+        if (!Session.isOfficer() && !Session.studentId().equals(studentId)) {
+            throw new ServiceException("Unauthorized: You cannot check eligibility for another student.");
+        }
         return Db.query(c -> check(c, studentId, driveId));
     }
 
     /** Evaluates a single student across multiple drives efficiently in one database connection. */
     public Map<Integer, EligibilityResult> checkStudentDrives(String studentId, List<Integer> driveIds) {
+        if (!Session.isOfficer() && !Session.studentId().equals(studentId)) {
+            throw new ServiceException("Unauthorized: You cannot check eligibility for another student.");
+        }
         if (driveIds == null || driveIds.isEmpty()) {
             return Map.of();
         }
@@ -81,9 +90,11 @@ public class EligibilityService {
             Set<Integer> ids = skills.studentSkills(c, studentId).stream().map(StudentSkill::skillId).collect(Collectors.toSet());
             Map<Integer, EligibilityResult> map = new java.util.HashMap<>();
             for (int dId : driveIds) {
-                try {
-                    map.put(dId, evaluate(s, ids, criteria(c, dId)));
-                } catch (Exception ignored) {
+                var crOpt = drives.criteria(c, dId);
+                if (crOpt.isPresent()) {
+                    map.put(dId, evaluate(s, ids, crOpt.get()));
+                } else {
+                    map.put(dId, new EligibilityResult(s, true, List.of("No specific eligibility criteria defined for this drive.")));
                 }
             }
             return map;
@@ -92,6 +103,7 @@ public class EligibilityService {
 
     /** Evaluates every student for a drive; eligible students first, then by CGPA. */
     public List<EligibilityResult> checkAll(int driveId) {
+        Session.requireOfficer();
         return Db.query(c -> {
             EligibilityCriteria cr = criteria(c, driveId);
             Map<String, Set<Integer>> skillMap = skills.allStudentSkillIds(c);

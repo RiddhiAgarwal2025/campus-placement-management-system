@@ -45,4 +45,30 @@ class CsvExporterTest {
         assertThat(content).contains("\"Hello, World\"");
         assertThat(content).contains("\"Line 1\nLine 2\"");
     }
+
+    @Test
+    @DisplayName("Export CSV preserves legitimate negative numbers without prepending single quote")
+    void testLegitimateNegativeNumbersNotMangled(@TempDir Path tempDir) throws IOException {
+        DefaultTableModel model = new DefaultTableModel();
+        model.addColumn("Metric");
+        model.addColumn("Value");
+
+        model.addRow(new Object[]{"Temperature", -5});
+        model.addRow(new Object[]{"Delta", "-12.50"});
+        model.addRow(new Object[]{"Loss", -100});
+
+        Path csvFile = tempDir.resolve("test_negative.csv");
+        CsvExporter.export(model, csvFile);
+
+        assertThat(csvFile).exists();
+        String content = Files.readString(csvFile);
+
+        // Verify that negative numbers are not prepended with single quotes
+        assertThat(content).contains("Temperature,-5");
+        assertThat(content).contains("Delta,-12.50");
+        assertThat(content).contains("Loss,-100");
+        assertThat(content).doesNotContain("'-5");
+        assertThat(content).doesNotContain("'-12.50");
+        assertThat(content).doesNotContain("'-100");
+    }
 }

@@ -27,16 +27,18 @@ public class DashboardDao {
     }
 
     public Map<String, Number> officerStats(Connection c) throws SQLException {
+        java.time.LocalDate today = java.time.LocalDate.now();
         return single(c, "SELECT (SELECT COUNT(*) FROM students) AS students, "
                 + "(SELECT COUNT(*) FROM companies) AS companies, "
-                + "(SELECT COUNT(*) FROM placement_drives WHERE status = 'OPEN' AND application_deadline >= CURDATE()) AS active_drives, "
+                + "(SELECT COUNT(*) FROM placement_drives WHERE status = 'OPEN' AND application_deadline >= ?) AS active_drives, "
                 + "(SELECT COUNT(*) FROM applications) AS applications, "
                 + "(SELECT COUNT(DISTINCT student_id) FROM applications WHERE status IN ('SHORTLISTED','SELECTED')) AS shortlisted, "
                 + "(SELECT COUNT(*) FROM offers) AS offers, "
                 + "(SELECT COUNT(*) FROM offers WHERE status = 'ACCEPTED') AS accepted, "
                 + "(SELECT COUNT(DISTINCT a.student_id) FROM offers o JOIN applications a ON a.application_id = o.application_id "
                 + "  WHERE o.status = 'ACCEPTED') AS placed, "
-                + "COALESCE((SELECT MAX(package_lpa) FROM offers), (SELECT MAX(package_lpa) FROM job_profiles), 0) AS max_package");
+                + "COALESCE((SELECT MAX(package_lpa) FROM offers), (SELECT MAX(package_lpa) FROM job_profiles), 0) AS max_package",
+                today);
     }
 
     public Map<String, int[]> departmentPlacements(Connection c) throws SQLException {
@@ -51,12 +53,13 @@ public class DashboardDao {
     }
 
     public Map<String, Number> studentStats(Connection c, String studentId) throws SQLException {
+        java.time.LocalDate today = java.time.LocalDate.now();
         return single(c, "SELECT (SELECT COUNT(*) FROM applications WHERE student_id = ?) AS applications, "
                 + "(SELECT COUNT(*) FROM applications WHERE student_id = ? AND status IN ('SHORTLISTED','SELECTED')) AS shortlisted, "
                 + "(SELECT COUNT(*) FROM offers o JOIN applications a ON a.application_id = o.application_id WHERE a.student_id = ?) AS offers, "
                 + "(SELECT COUNT(*) FROM offers o JOIN applications a ON a.application_id = o.application_id "
                 + "  WHERE a.student_id = ? AND o.status = 'PENDING') AS pending_offers, "
-                + "(SELECT COUNT(*) FROM placement_drives WHERE status = 'OPEN' AND application_deadline >= CURDATE()) AS open_drives",
-                studentId, studentId, studentId, studentId);
+                + "(SELECT COUNT(*) FROM placement_drives WHERE status = 'OPEN' AND application_deadline >= ?) AS open_drives",
+                studentId, studentId, studentId, studentId, today);
     }
 }

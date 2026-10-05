@@ -999,3 +999,10 @@ BEGIN
 END$$
 
 DELIMITER ;
+
+-- 08: Least-privilege application client user
+CREATE USER IF NOT EXISTS 'placement_app'@'localhost' IDENTIFIED BY 'Placement@123';
+CREATE USER IF NOT EXISTS 'placement_app'@'%' IDENTIFIED BY 'Placement@123';
+GRANT SELECT, INSERT, UPDATE, DELETE, EXECUTE ON campus_placement.* TO 'placement_app'@'localhost';
+GRANT SELECT, INSERT, UPDATE, DELETE, EXECUTE ON campus_placement.* TO 'placement_app'@'%';
+FLUSH PRIVILEGES;

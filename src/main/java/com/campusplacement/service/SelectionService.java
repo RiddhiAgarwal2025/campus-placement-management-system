@@ -22,6 +22,7 @@ public class SelectionService {
     private final OfferDao offers = new OfferDao();
 
     public List<SelectionRound> rounds(int driveId) {
+        Session.requireOfficer();
         return Db.query(c -> dao.rounds(c, driveId));
     }
 
@@ -72,6 +73,7 @@ public class SelectionService {
     }
 
     public List<RoundCandidate> candidates(SelectionRound r) {
+        Session.requireOfficer();
         return Db.query(c -> {
             SelectionRound prev = previousRound(dao.rounds(c, r.driveId()), r);
             return dao.candidates(c, r.driveId(), r.roundId(), prev == null ? 0 : prev.roundId());
